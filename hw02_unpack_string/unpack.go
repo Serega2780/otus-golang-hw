@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 var ErrInvalidString = errors.New("invalid string")
@@ -12,7 +13,7 @@ var ErrInvalidString = errors.New("invalid string")
 func Unpack(str string) (string, error) {
 	init := []rune(str)
 	var sb strings.Builder
-	bcsl := false
+	backSlash := false
 	for i, v := range init {
 		_, err := check(i, v, init)
 		if err != nil {
@@ -21,22 +22,25 @@ func Unpack(str string) (string, error) {
 
 		switch {
 		case v == 92:
-			if bcsl {
+			if backSlash {
 				write(&sb, v)
-				bcsl = false
+				backSlash = false
 			} else {
-				bcsl = true
+				backSlash = true
 			}
 		case unicode.IsDigit(v):
 			count, err := strconv.Atoi(string(v))
 			if err != nil {
 				return "", ErrInvalidString
 			}
-			if bcsl {
+			if backSlash {
 				write(&sb, v)
-				bcsl = false
+				backSlash = false
 			} else {
-				repeat(&sb, init[i-1], count-1)
+				err = repeat(&sb, init[i-1], count-1)
+				if err != nil {
+					return "", err
+				}
 			}
 		default:
 			write(&sb, v)
@@ -61,13 +65,26 @@ func write(sb *strings.Builder, symbol rune) {
 	sb.WriteRune(symbol)
 }
 
-func repeat(sb *strings.Builder, symbol rune, count int) {
+func repeat(sb *strings.Builder, symbol rune, count int) error {
 	if count < 0 {
-		str := sb.String()
-		str = str[:len(str)-1]
-		sb.Reset()
-		sb.WriteString(str)
+		err := trimLastRune(sb)
+		if err != nil {
+			return err
+		}
 	} else {
 		sb.WriteString(strings.Repeat(string(symbol), count))
 	}
+
+	return nil
+}
+
+func trimLastRune(sb *strings.Builder) error {
+	err, size := utf8.DecodeLastRuneInString(sb.String())
+	if err == utf8.RuneError && (size == 0 || size == 1) {
+		return ErrInvalidString
+	}
+	str := sb.String()
+	sb.Reset()
+	sb.WriteString(str[:len(str)-size])
+	return nil
 }
