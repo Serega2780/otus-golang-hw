@@ -14,6 +14,12 @@ linters-settings:
         allow:
           - fmt
           - github.com/agrison/go-commons-lang/stringUtils
+          - github.com/stretchr/testify/require
+          - testing
+          - errors
+          - unicode
+          - strings
+          - strconv
 
 
 issues:
