@@ -10,9 +10,12 @@ import (
 
 var ErrInvalidString = errors.New("invalid string")
 
+const BackSlashCode rune = 92
+
 func Unpack(str string) (string, error) {
 	init := []rune(str)
 	var sb strings.Builder
+	sbPtr := &sb
 	backSlash := false
 	for i, v := range init {
 		_, err := check(i, v, init)
@@ -21,9 +24,9 @@ func Unpack(str string) (string, error) {
 		}
 
 		switch {
-		case v == 92:
+		case v == BackSlashCode:
 			if backSlash {
-				write(&sb, v)
+				write(sbPtr, v)
 				backSlash = false
 			} else {
 				backSlash = true
@@ -34,10 +37,10 @@ func Unpack(str string) (string, error) {
 				return "", ErrInvalidString
 			}
 			if backSlash {
-				write(&sb, v)
+				write(sbPtr, v)
 				backSlash = false
 			} else {
-				err = repeat(&sb, init[i-1], count-1)
+				err = repeat(sbPtr, init[i-1], count-1)
 				if err != nil {
 					return "", err
 				}
@@ -46,7 +49,7 @@ func Unpack(str string) (string, error) {
 			if backSlash {
 				return "", ErrInvalidString
 			}
-			write(&sb, v)
+			write(sbPtr, v)
 		}
 	}
 	if backSlash {
@@ -59,7 +62,7 @@ func check(i int, symbol rune, init []rune) (bool, error) {
 	if i == 0 && unicode.IsDigit(symbol) {
 		return false, ErrInvalidString
 	}
-	if unicode.IsDigit(symbol) && unicode.IsDigit(init[i-1]) && init[i-2] != 92 {
+	if unicode.IsDigit(symbol) && unicode.IsDigit(init[i-1]) && init[i-2] != BackSlashCode {
 		return false, ErrInvalidString
 	}
 
