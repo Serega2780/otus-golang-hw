@@ -43,10 +43,15 @@ func Unpack(str string) (string, error) {
 				}
 			}
 		default:
+			if backSlash {
+				return "", ErrInvalidString
+			}
 			write(&sb, v)
 		}
 	}
-
+	if backSlash {
+		return "", ErrInvalidString
+	}
 	return sb.String(), nil
 }
 
