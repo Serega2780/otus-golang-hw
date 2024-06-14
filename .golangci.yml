@@ -20,6 +20,7 @@ linters-settings:
           - unicode
           - strings
           - strconv
+          - sort
 
 
 issues:
