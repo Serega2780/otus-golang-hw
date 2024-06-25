@@ -51,6 +51,54 @@ func TestCache(t *testing.T) {
 
 	t.Run("purge logic", func(t *testing.T) {
 		// Write me
+		c := NewCache(3)
+
+		wasInCache := c.Set("aaa", 100)
+		require.False(t, wasInCache)
+		wasInCache = c.Set("bbb", 200)
+		require.False(t, wasInCache)
+		wasInCache = c.Set("ccc", 300)
+		require.False(t, wasInCache)
+		wasInCache = c.Set("ddd", 400)
+		require.False(t, wasInCache)
+
+		_, wasInCache = c.Get("aaa")
+		require.False(t, wasInCache)
+		_, wasInCache = c.Get("bbb")
+		require.True(t, wasInCache)
+		_, wasInCache = c.Get("ccc")
+		require.True(t, wasInCache)
+		_, wasInCache = c.Get("ddd")
+		require.True(t, wasInCache)
+	})
+
+	t.Run("purge old logic", func(t *testing.T) {
+		// Write me
+		c := NewCache(3)
+
+		wasInCache := c.Set("aaa", 100)
+		require.False(t, wasInCache)
+		wasInCache = c.Set("bbb", 200)
+		require.False(t, wasInCache)
+		wasInCache = c.Set("ccc", 300)
+		require.False(t, wasInCache)
+
+		c.Get("aaa")
+		c.Get("bbb")
+		c.Get("ccc") // order in a queue [ccc, bbb, aaa]
+
+		c.Set("aaa", 101) // order in a queue [aaa, ccc, bbb]
+		c.Set("ccc", 101) // order in a queue [ccc, aaa, bbb]
+
+		c.Set("ddd", 400) // order in a queue [ddd, aaa, ccc]
+		_, wasInCache = c.Get("aaa")
+		require.True(t, wasInCache)
+		_, wasInCache = c.Get("bbb")
+		require.False(t, wasInCache)
+		_, wasInCache = c.Get("ccc")
+		require.True(t, wasInCache)
+		_, wasInCache = c.Get("ddd")
+		require.True(t, wasInCache)
 	})
 }
 
