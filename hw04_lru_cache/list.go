@@ -1,7 +1,5 @@
 package hw04lrucache
 
-import "fmt"
-
 type List interface {
 	Len() int
 	Front() *ListItem
@@ -13,20 +11,19 @@ type List interface {
 }
 
 type ListItem struct {
-	key   Key
 	Value interface{}
 	Next  *ListItem
 	Prev  *ListItem
 }
 
 type list struct {
-	front    *ListItem
-	back     *ListItem
-	elements map[Key]*ListItem
+	front *ListItem
+	back  *ListItem
+	len   int
 }
 
 func (l *list) Len() int {
-	return len(l.elements)
+	return l.len
 }
 
 func (l *list) Front() *ListItem {
@@ -38,120 +35,80 @@ func (l *list) Back() *ListItem {
 }
 
 func (l *list) PushFront(v interface{}) *ListItem {
-	var value interface{}
-	var key Key
-
-	switch i := v.(type) {
-	case Pair:
-		value = i.value
-		key = i.key
-	default:
-		value = v
-	}
-
-	k := genKey(value, key)
-	val, ok := l.elements[k]
-	if !ok {
-		if l.front == nil {
-			l.front = &ListItem{key: k, Value: value, Next: nil, Prev: nil}
-		} else {
-			temp := l.front
-			l.front = &ListItem{key: k, Value: value, Next: temp, Prev: nil}
-			temp.Prev = l.front
-			if temp.Next == nil {
-				l.back = temp
-			}
+	if l.front == nil {
+		l.front = &ListItem{Value: v, Next: nil, Prev: nil}
+		l.back = l.front
+	} else {
+		temp := l.front
+		l.front = &ListItem{Value: v, Next: temp, Prev: nil}
+		temp.Prev = l.front
+		if temp.Next == nil {
+			l.back = temp
 		}
-		l.elements[k] = l.front
-		return l.front
 	}
-	return val
+	l.len++
+	return l.front
 }
 
 func (l *list) PushBack(v interface{}) *ListItem {
-	var value interface{}
-	var key Key
-
-	switch i := v.(type) {
-	case Pair:
-		value = i.value
-		key = i.key
-	default:
-		value = v
+	if l.back == nil {
+		return l.PushFront(v)
 	}
-
-	k := genKey(value, key)
-	val, ok := l.elements[k]
-	if !ok {
-		if l.front == nil {
-			return l.PushFront(v)
-		}
-		if l.back == nil {
-			l.back = &ListItem{key: k, Value: value, Next: nil, Prev: l.front}
-			l.front.Next = l.back
-		} else {
-			temp := l.back
-			l.back = &ListItem{key: k, Value: value, Next: nil, Prev: temp}
-			temp.Next = l.back
-		}
-		l.elements[k] = l.back
-		return l.back
+	if l.back == l.front {
+		l.back = &ListItem{Value: v, Next: nil, Prev: l.front}
+		l.front.Next = l.back
+	} else {
+		temp := l.back
+		l.back = &ListItem{Value: v, Next: nil, Prev: temp}
+		temp.Next = l.back
 	}
-
-	return val
+	l.len++
+	return l.back
 }
 
 func (l *list) Remove(i *ListItem) {
-	val, ok := l.elements[i.key]
-	if ok {
-		switch val {
-		case l.front:
-			l.front = l.front.Next
-			l.front.Prev = nil
-		case l.back:
-			l.back = l.back.Prev
-			l.back.Next = nil
-		default:
-			changeLinks(val)
-		}
-		delete(l.elements, i.key)
+	if l.len == 1 {
+		l.front, l.back = nil, nil
+		l.len = 0
+		return
 	}
+	switch i {
+	case l.front:
+		l.front = l.front.Next
+		l.front.Prev = nil
+	case l.back:
+		l.back = l.back.Prev
+		l.back.Next = nil
+	default:
+		changeLinks(i)
+	}
+	l.len--
 }
 
 func (l *list) MoveToFront(i *ListItem) {
-	val, ok := l.elements[i.key]
-	if ok {
-		if val == l.front {
-			return
-		}
-		if val == l.back {
-			newBack := val.Prev
-			temp := l.front
-			temp.Prev = val
-			val.Next = temp
-			l.front = val
-			l.front.Prev = nil
-			l.back = newBack
-			l.back.Next = nil
-		} else {
-			changeLinks(val)
-			temp := l.front
-			temp.Prev = val
-			val.Next = temp
-			l.front = val
-		}
+	if i == l.front {
+		return
+	}
+	if i == l.back {
+		newBack := i.Prev
+		temp := l.front
+		temp.Prev = i
+		i.Next = temp
+		l.front = i
+		l.front.Prev = nil
+		l.back = newBack
+		l.back.Next = nil
+	} else {
+		changeLinks(i)
+		temp := l.front
+		temp.Prev = i
+		i.Next = temp
+		l.front = i
 	}
 }
 
 func NewList() List {
-	return &list{front: nil, back: nil, elements: make(map[Key]*ListItem)}
-}
-
-func genKey(v interface{}, k Key) Key {
-	if len(k) == 0 {
-		return Key(fmt.Sprintf("%v", v))
-	}
-	return k
+	return &list{front: nil, back: nil, len: 0}
 }
 
 func changeLinks(val *ListItem) {
