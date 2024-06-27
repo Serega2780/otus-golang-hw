@@ -21,6 +21,8 @@ linters-settings:
           - strings
           - strconv
           - sort
+          - sync
+          - math/rand
 
 
 issues:
