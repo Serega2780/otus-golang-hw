@@ -42,9 +42,6 @@ func (l *list) PushFront(v interface{}) *ListItem {
 		temp := l.front
 		l.front = &ListItem{Value: v, Next: temp, Prev: nil}
 		temp.Prev = l.front
-		if temp.Next == nil {
-			l.back = temp
-		}
 	}
 	l.len++
 	return l.front
