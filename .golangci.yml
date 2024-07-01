@@ -23,6 +23,8 @@ linters-settings:
           - sort
           - sync
           - math/rand
+          - time
+          - go.uber.org/goleak
 
 
 issues:
