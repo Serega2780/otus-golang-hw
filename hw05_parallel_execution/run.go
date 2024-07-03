@@ -3,6 +3,7 @@ package hw05parallelexecution
 import (
 	"errors"
 	"sync"
+	"sync/atomic"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
@@ -12,36 +13,33 @@ type Task func() error
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
 	var wg sync.WaitGroup
-	errs := make(chan struct{}, len(tasks))
 	tc := make(chan Task)
-	errCount := 0
+	var errC atomic.Uint64
 	breakWithError := false
-
+	flag := m <= 0
 	for i := 0; i < n; i++ {
 		wg.Add(1)
-		go worker(&wg, errs, tc)
+		go worker(&wg, tc, &errC, m, flag)
 	}
 
-	for _, t := range tasks {
-		select {
-		case <-errs:
-			errCount++
-			if m > 0 && errCount >= m {
+	if flag {
+		for _, t := range tasks {
+			tc <- t
+		}
+		close(tc)
+	} else {
+		for _, t := range tasks {
+			if errC.Load() < uint64(m) {
+				tc <- t
+			} else {
 				close(tc)
 				breakWithError = true
 				break
-			} else {
-				tc <- t
 			}
-		default:
-			tc <- t
 		}
-		if breakWithError {
-			break
+		if !breakWithError {
+			close(tc)
 		}
-	}
-	if !breakWithError {
-		close(tc)
 	}
 	wg.Wait()
 	if breakWithError {
@@ -51,12 +49,21 @@ func Run(tasks []Task, n, m int) error {
 	return nil
 }
 
-func worker(wg *sync.WaitGroup, errs chan<- struct{}, tc <-chan Task) {
+func worker(wg *sync.WaitGroup, tc <-chan Task, errC *atomic.Uint64, m int, ignoreE bool) {
 	defer wg.Done()
-	for t := range tc {
-		err := t()
-		if err != nil {
-			errs <- struct{}{}
+	if !ignoreE {
+		for t := range tc {
+			if errC.Load() >= uint64(m) {
+				break
+			}
+			err := t()
+			if err != nil {
+				errC.Add(1)
+			}
+		}
+	} else {
+		for t := range tc {
+			_ = t()
 		}
 	}
 }

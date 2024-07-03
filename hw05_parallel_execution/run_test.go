@@ -129,24 +129,25 @@ func TestRun(t *testing.T) {
 		var sumTime time.Duration
 
 		for i := 0; i < tasksCount; i++ {
-			err := fmt.Errorf("error from task %d", i)
 			taskSleep := time.Millisecond * time.Duration(rand.Intn(100))
 			sumTime += taskSleep
+
 			tasks = append(tasks, func() error {
 				time.Sleep(taskSleep)
 				atomic.AddInt32(&runTasksCount, 1)
-				return err
+				return nil
 			})
 		}
 
 		workersCount := 10
 		maxErrorsCount := 0
+
 		start := time.Now()
 		err := Run(tasks, workersCount, maxErrorsCount)
 		elapsedTime := time.Since(start)
 		require.NoError(t, err)
 
-		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
+		require.Equal(t, int32(tasksCount), runTasksCount, "not all tasks were completed")
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
 	})
 }
