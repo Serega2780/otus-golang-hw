@@ -19,7 +19,7 @@ func Run(tasks []Task, n, m int) error {
 	flag := m <= 0
 	for i := 0; i < n; i++ {
 		wg.Add(1)
-		go worker(&wg, tc, &errC, m, flag)
+		go worker(&wg, tc, &errC)
 	}
 
 	if flag {
@@ -49,21 +49,12 @@ func Run(tasks []Task, n, m int) error {
 	return nil
 }
 
-func worker(wg *sync.WaitGroup, tc <-chan Task, errC *atomic.Uint64, m int, ignoreE bool) {
+func worker(wg *sync.WaitGroup, tc <-chan Task, errC *atomic.Uint64) {
 	defer wg.Done()
-	if !ignoreE {
-		for t := range tc {
-			if errC.Load() >= uint64(m) {
-				break
-			}
-			err := t()
-			if err != nil {
-				errC.Add(1)
-			}
-		}
-	} else {
-		for t := range tc {
-			_ = t()
+	for t := range tc {
+		err := t()
+		if err != nil {
+			errC.Add(1)
 		}
 	}
 }
