@@ -40,6 +40,9 @@ func TestPipeline(t *testing.T) {
 		in := make(Bi)
 		data := []int{1, 2, 3, 4, 5}
 
+		// 3 goroutings is a min to accept 0.8 sec timeout requirement
+		GrCount = 3
+
 		go func() {
 			for _, v := range data {
 				in <- v
@@ -88,6 +91,40 @@ func TestPipeline(t *testing.T) {
 		elapsed := time.Since(start)
 
 		require.Len(t, result, 0)
+		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
+	})
+
+	t.Run("done case with partial result 2", func(t *testing.T) {
+		in := make(Bi)
+		done := make(Bi)
+		data := []int{1, 2, 3, 4, 5}
+
+		// only 2 goroutings available
+		GrCount = 2
+
+		// Abort after 400ms
+		// 2 gorouting will take 2 values from in chan, process them, save result, but then done signal will abort execution
+		abortDur := sleepPerStage * 5
+		go func() {
+			<-time.After(abortDur)
+			close(done)
+		}()
+
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+
+		result := make([]string, 0, 10)
+		start := time.Now()
+		for s := range ExecutePipeline(in, done, stages...) {
+			result = append(result, s.(string))
+		}
+		elapsed := time.Since(start)
+
+		require.Equal(t, []string{"102", "104"}, result)
 		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
 	})
 }
