@@ -12,106 +12,41 @@ type (
 
 type Stage func(in In) (out Out)
 
-type Sync struct {
-	m  map[int]interface{}
-	mu sync.Mutex
-}
-
-type Mark struct {
-	pos int
-	v   interface{}
-}
-
-func NewSync() *Sync {
-	s := new(Sync)
-	s.m = make(map[int]interface{})
-	return s
-}
-
-var GrCount = 8
-
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	// Place your code here.
+	var wg sync.WaitGroup
+	result := make([]interface{}, 0)
 
-	preparedC := make(Bi)
-	doneC := make(Bi)
-	grCount := 0
+	wg.Add(1)
+	go worker(&wg, stages, in, done, &result)
+	wg.Wait()
 
-	s := NewSync()
+	return calcResult(result)
+}
 
-	prepare(in, preparedC)
+func calcResult(result []interface{}) Bi {
+	out := make(Bi, len(result))
+	defer close(out)
+	for _, r := range result {
+		out <- r
+	}
+	return out
+}
 
-	runWorkers(s, preparedC, stages, doneC)
-
+func worker(wg *sync.WaitGroup, stages []Stage, in In, done In, result *[]interface{}) {
+	defer wg.Done()
+	for i := 0; i < len(stages); i++ {
+		in = stages[i](in)
+	}
 	for {
 		select {
 		case <-done:
-			return calcResult(s)
-		case <-doneC:
-			grCount++
-			if grCount == GrCount {
-				return calcResult(s)
+			return
+		case tmp, ok := <-in:
+			if !ok {
+				return
 			}
+			*result = append(*result, tmp)
 		}
 	}
-}
-
-func calcResult(s *Sync) Bi {
-	s.mu.Lock()
-	result := make(Bi, len(s.m))
-	if len(s.m) > 0 {
-		for i := 0; i < len(s.m); i++ {
-			v := s.m[i+1]
-			if v != nil {
-				result <- s.m[i+1]
-			}
-		}
-	}
-	s.mu.Unlock()
-	close(result)
-	return result
-}
-
-func runWorkers(s *Sync, preparedC Bi, stages []Stage, doneC Bi) {
-	for i := 0; i < GrCount; i++ {
-		go worker(s, preparedC, stages, doneC)
-	}
-}
-
-func prepare(in In, preparedC Bi) {
-	go func() {
-		i := 0
-		for v := range in {
-			i++
-			preparedC <- Mark{i, v}
-		}
-		close(preparedC)
-	}()
-}
-
-func worker(s *Sync, preparedC In, stages []Stage, doneC Bi) {
-	for v := range preparedC {
-		key := v.(Mark).pos
-		tmp := steps(stages, v.(Mark).v)
-		s.mu.Lock()
-		s.m[key] = tmp
-		s.mu.Unlock()
-	}
-	doneC <- struct{}{}
-}
-
-func steps(stages []Stage, v interface{}) interface{} {
-	tmpV := v
-	for i := 0; i < len(stages); i++ {
-		tmpV = step(stages[i], tmpV)
-	}
-	return tmpV
-}
-
-func step(stage Stage, v interface{}) interface{} {
-	tmpC := make(Bi, 1)
-	tmpC <- v
-	close(tmpC)
-	tmp := <-stage(tmpC)
-	return tmp
 }
