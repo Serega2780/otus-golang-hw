@@ -25,6 +25,10 @@ linters-settings:
           - math/rand
           - time
           - go.uber.org/goleak
+          - io
+          - math
+          - os
+          - flag
 
 
 issues:
