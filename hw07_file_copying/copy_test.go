@@ -112,6 +112,26 @@ func TestCopy(t *testing.T) {
 		err := Copy(`./testdata/input.txt`, `/tmp/random`, 10000, 0)
 		require.Error(t, err, ErrOffsetExceedsFileSize)
 	})
+
+	t.Run("offset0_limit600_same_file case", func(t *testing.T) {
+		tmpF, _ := os.Open(`./testdata/input.txt`)
+		tmpT, _ := os.Open(`./testdata/input_for_600.txt`)
+		tmpF.WriteTo(tmpT)
+		tmpF.Close()
+		tmpT.Close()
+
+		err := Copy(`./testdata/input_for_600.txt`, `./testdata/input_for_600.txt`, 0, 600)
+		require.NoError(t, err, nil)
+
+		f, _ := os.Open(`./testdata/input_for_600.txt`)
+		f2, _ := os.Open(`./testdata/out_offset0_limit600.txt`)
+		defer f.Close()
+		defer f2.Close()
+
+		_, _ = f.ReadAt(buf, 0)
+		_, _ = f2.ReadAt(buf2, 0)
+		require.True(t, testEq(buf, buf2))
+	})
 }
 
 func testEq(a, b []byte) bool {

@@ -10,23 +10,30 @@ import (
 )
 
 var (
-	ErrUnsupportedFile       = errors.New("unsupported file")
-	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
-	ErrFileNotFound          = errors.New("file not found")
-	ErrFileStat              = errors.New("file stat error")
-	ErrOpenFile              = errors.New("file open error")
-	ErrReadFile              = errors.New("file read error")
-	ErrWriteFile             = errors.New("file write error")
-	N                        = 1024
-	inF                      *os.File
-	outF                     *os.File
-	buf                      []byte
-	ch                       chan int64
-	wg                       sync.WaitGroup
+	ErrUnsupportedFile         = errors.New("unsupported file")
+	ErrOffsetExceedsFileSize   = errors.New("offset exceeds file size")
+	ErrFileNotFound            = errors.New("file not found")
+	ErrFileStat                = errors.New("file stat error")
+	ErrOpenFile                = errors.New("file open error")
+	ErrReadFile                = errors.New("file read error")
+	ErrWriteFile               = errors.New("file write error")
+	ErrCloseFile               = errors.New("file close error")
+	ErrDeleteFile              = errors.New("file delete error")
+	ErrCreateFile              = errors.New("file create error")
+	N                          = 1024
+	inF, outF, tmpF            *os.File
+	buf                        []byte
+	ch                         chan int64
+	size, pSize                int64
+	wg                         sync.WaitGroup
+	isTheSame, fIn, fOut, fTmp bool
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
 	ch = make(chan int64, 1)
+	if fromPath == toPath {
+		isTheSame = true
+	}
 	if limit == 0 {
 		limit = math.MaxInt64
 	}
@@ -37,23 +44,24 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		buf = make([]byte, N)
 	}
 
-	var size int64
-
-	defer inF.Close()
-	defer outF.Close()
+	defer closeFiles()
 
 	err := check(fromPath, toPath, offset, &size)
 	if err != nil {
 		return err
 	}
 
+	pSize = size - offset
+	if limit < pSize {
+		pSize = limit
+	}
+
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
 		for d := range ch {
-			fmt.Printf(" %d"+"%%", 100*d/size)
+			fmt.Printf(" %d"+"%%", 100*d/pSize)
 		}
-		fmt.Print(" 100%")
 	}(&wg)
 
 	wOffset := int64(0)
@@ -80,6 +88,25 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		ch <- wOffset
 	}
 	close(ch)
+	if isTheSame {
+		err = inF.Close()
+		if err != nil {
+			return fmt.Errorf(ErrCloseFile.Error()+" "+err.Error()+" %s\n", fromPath)
+		}
+		fIn = true
+		err = os.Remove(fromPath)
+		if err != nil {
+			return fmt.Errorf(ErrDeleteFile.Error()+" "+err.Error()+" %s\n", fromPath)
+		}
+		tmpF, err = os.Create(toPath)
+		if err != nil {
+			return fmt.Errorf(ErrCreateFile.Error()+" "+err.Error()+" %s\n", toPath)
+		}
+		_, err = outF.WriteTo(tmpF)
+		if err != nil {
+			return fmt.Errorf(ErrWriteFile.Error()+" "+err.Error()+" %s\n", toPath)
+		}
+	}
 	wg.Wait()
 
 	return nil
@@ -108,10 +135,27 @@ func check(fromPath, toPath string, offset int64, size *int64) error {
 		return ErrOffsetExceedsFileSize
 	}
 
-	outF, err = os.Create(toPath)
+	if isTheSame {
+		outF, err = os.CreateTemp("/tmp", "*")
+	} else {
+		outF, err = os.Create(toPath)
+	}
+
 	if err != nil {
-		return fmt.Errorf(ErrOpenFile.Error()+" "+err.Error()+" %s\n", toPath)
+		return fmt.Errorf(ErrCreateFile.Error()+" "+err.Error()+" %s\n", toPath)
 	}
 
 	return nil
+}
+
+func closeFiles() {
+	if !fIn {
+		inF.Close()
+	}
+	if !fOut {
+		outF.Close()
+	}
+	if !fTmp {
+		tmpF.Close()
+	}
 }
