@@ -15,6 +15,7 @@ linters-settings:
           - fmt
           - github.com/agrison/go-commons-lang/stringUtils
           - github.com/stretchr/testify/require
+          - github.com/cheggaaa/pb
           - testing
           - errors
           - unicode
@@ -25,6 +26,10 @@ linters-settings:
           - math/rand
           - time
           - go.uber.org/goleak
+          - io
+          - math
+          - os
+          - flag
 
 
 issues:
