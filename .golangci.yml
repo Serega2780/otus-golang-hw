@@ -15,6 +15,7 @@ linters-settings:
           - fmt
           - github.com/agrison/go-commons-lang/stringUtils
           - github.com/stretchr/testify/require
+          - github.com/cheggaaa/pb
           - testing
           - errors
           - unicode

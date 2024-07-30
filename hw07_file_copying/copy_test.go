@@ -115,7 +115,7 @@ func TestCopy(t *testing.T) {
 
 	t.Run("offset0_limit600_same_file case", func(t *testing.T) {
 		tmpF, _ := os.Open(`./testdata/input.txt`)
-		tmpT, _ := os.Open(`./testdata/input_for_600.txt`)
+		tmpT, _ := os.Create(`./testdata/input_for_600.txt`)
 		tmpF.WriteTo(tmpT)
 		tmpF.Close()
 		tmpT.Close()
