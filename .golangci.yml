@@ -30,6 +30,8 @@ linters-settings:
           - math
           - os
           - flag
+          - bytes
+          - regexp
 
 
 issues:
