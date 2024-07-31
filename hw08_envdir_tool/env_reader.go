@@ -11,6 +11,7 @@ import (
 
 const (
 	WhiteSpace = " "
+	Tab        = "\t"
 	NullSymbol = "\x00"
 	NewLine    = "\n"
 	Slash      = "/"
@@ -81,7 +82,7 @@ func ReadDir(dir string) (Environment, error) {
 			continue
 		}
 		envValue = bytes.ReplaceAll(envValue, []byte(NullSymbol), []byte(NewLine))
-		str := strings.TrimRight(string(envValue), WhiteSpace)
+		str := strings.TrimRight(strings.TrimRight(string(envValue), WhiteSpace), Tab)
 		env[fi.Name()] = EnvValue{Value: str, NeedRemove: false}
 	}
 	return env, nil

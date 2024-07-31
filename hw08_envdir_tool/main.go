@@ -16,5 +16,5 @@ func main() {
 		fmt.Println(err.Error())
 		return
 	}
-	RunCmd(os.Args[2:], env)
+	os.Exit(RunCmd(os.Args[2:], env))
 }
