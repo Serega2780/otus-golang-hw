@@ -79,7 +79,10 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	for wOffset < limit && !errors.Is(fErr, io.EOF) {
 		n, fErr = params.inF.ReadAt(params.buf, offset)
 		if fErr != nil && !errors.Is(fErr, io.EOF) {
-			if fErr = removeToFileIfError(params.outF); fErr != nil {
+			if fErr = params.outF.Close(); fErr != nil {
+				return fmt.Errorf(ErrCloseFile.Error()+" "+fErr.Error()+" %s\n", toPath)
+			}
+			if fErr = removeFile(params.outF); fErr != nil {
 				return fmt.Errorf(ErrReadFile.Error()+" "+fErr.Error()+" %s\n", fromPath)
 			}
 		}
@@ -114,11 +117,8 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	return nil
 }
 
-func removeToFileIfError(f *os.File) (er error) {
+func removeFile(f *os.File) (er error) {
 	fName := f.Name()
-	if er = f.Close(); er != nil {
-		return fmt.Errorf(ErrCloseFile.Error()+" "+er.Error()+" %s\n", fName)
-	}
 	if er = os.Remove(fName); er != nil {
 		return fmt.Errorf(ErrDeleteFile.Error()+" "+er.Error()+" %s\n", fName)
 	}
