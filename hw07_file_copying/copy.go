@@ -25,85 +25,90 @@ var (
 	ErrDeleteFile            = errors.New("file delete error")
 	ErrCreateFile            = errors.New("file create error")
 	N                        = 1024
-	inF, outF, tmpF          *os.File
-	buf                      []byte
-	ch                       chan int64
-	size, pSize              int64
-	wg                       sync.WaitGroup
-	isSame, fIn, fOut        bool
-	toPathTmp                string
 )
 
+type Params struct {
+	inF, outF, tmpF   *os.File
+	buf               []byte
+	ch                chan int64
+	size, pSize       int64
+	wg                sync.WaitGroup
+	isSame, fIn, fOut bool
+	toPathTmp         string
+}
+
 func Copy(fromPath, toPath string, offset, limit int64) error {
-	ch = make(chan int64, 1)
+	params := &Params{
+		ch: make(chan int64, 1),
+	}
 
 	if limit == 0 {
 		limit = math.MaxInt64
 	}
 
 	if limit < int64(N) {
-		buf = make([]byte, limit)
+		params.buf = make([]byte, limit)
 	} else {
-		buf = make([]byte, N)
+		params.buf = make([]byte, N)
 	}
 
-	defer closeFiles()
+	defer closeFiles(params)
 
-	err := check(fromPath, toPath, offset, &size)
+	err := check(fromPath, toPath, offset, params)
 	if err != nil {
 		return err
 	}
 
-	pSize = size
-	pSize -= offset
-	if pSize > limit {
-		pSize = limit
+	params.pSize = params.size
+	params.pSize -= offset
+	if params.pSize > limit {
+		params.pSize = limit
 	}
-	bar := pb.StartNew(int(pSize)).SetUnits(pb.U_BYTES)
-	wg.Add(1)
+	bar := pb.StartNew(int(params.pSize)).SetUnits(pb.U_BYTES)
+	params.wg.Add(1)
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
-		for d := range ch {
+		for d := range params.ch {
 			bar.Add(int(d))
 		}
-	}(&wg)
+	}(&params.wg)
 
 	wOffset := int64(0)
 	var fErr error
 	var n int
 	for wOffset < limit && !errors.Is(fErr, io.EOF) {
-		n, fErr = inF.ReadAt(buf, offset)
+		n, fErr = params.inF.ReadAt(params.buf, offset)
 		if fErr != nil && !errors.Is(fErr, io.EOF) {
-			if fErr = removeToFileIfError(outF); fErr != nil {
+			if fErr = removeToFileIfError(params.outF); fErr != nil {
 				return fmt.Errorf(ErrReadFile.Error()+" "+fErr.Error()+" %s\n", fromPath)
 			}
 		}
 		tmp := wOffset + int64(n)
 		if tmp > limit {
-			buf = buf[0 : limit-wOffset]
+			params.buf = params.buf[0 : limit-wOffset]
 		} else if errors.Is(fErr, io.EOF) {
-			buf = buf[0:n]
+			params.buf = params.buf[0:n]
 		}
 
-		n, err = outF.WriteAt(buf, wOffset)
+		n, err = params.outF.WriteAt(params.buf, wOffset)
 		if err != nil {
 			return fmt.Errorf(ErrWriteFile.Error()+" "+err.Error()+" %s\n", toPath)
 		}
 		wOffset += int64(n)
 		offset += int64(n)
-		ch <- int64(n)
+		params.ch <- int64(n)
 	}
-	close(ch)
-	if isSame {
-		if err = inF.Close(); err != nil {
+	close(params.ch)
+	if params.isSame {
+		if err = params.inF.Close(); err != nil {
 			return fmt.Errorf(ErrCloseFile.Error()+" "+err.Error()+" %s\n", fromPath)
 		}
-		fIn = true
-		if err = os.Rename(toPathTmp, toPath); err != nil {
+		params.fIn = true
+		if err = os.Rename(params.toPathTmp, toPath); err != nil {
 			return fmt.Errorf(ErrCreateFile.Error()+" "+err.Error()+" %s\n", toPath)
 		}
 	}
-	wg.Wait()
+	params.wg.Wait()
 	bar.Finish()
 
 	return nil
@@ -120,9 +125,9 @@ func removeToFileIfError(f *os.File) (er error) {
 	return nil
 }
 
-func check(fromPath, toPath string, offset int64, size *int64) error {
+func check(fromPath, toPath string, offset int64, params *Params) error {
 	var err error
-	inF, err = os.Open(fromPath)
+	params.inF, err = os.Open(fromPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return fmt.Errorf(ErrFileNotFound.Error()+" "+err.Error()+" %s\n", fromPath)
@@ -130,12 +135,12 @@ func check(fromPath, toPath string, offset int64, size *int64) error {
 		return fmt.Errorf(ErrOpenFile.Error()+" "+err.Error()+" %s\n", fromPath)
 	}
 
-	inFInf, er := inF.Stat()
+	inFInf, er := params.inF.Stat()
 	if er != nil {
 		return fmt.Errorf(ErrFileStat.Error()+" "+er.Error()+" %s\n", fromPath)
 	}
-	*size = inFInf.Size()
-	if *size == 0 {
+	params.size = inFInf.Size()
+	if params.size == 0 {
 		return ErrUnsupportedFile
 	}
 
@@ -143,17 +148,17 @@ func check(fromPath, toPath string, offset int64, size *int64) error {
 		return ErrOffsetExceedsFileSize
 	}
 
-	isSame, er = isTheSame(toPath, &inFInf)
+	params.isSame, er = isTheSame(toPath, &inFInf, params)
 	if er != nil {
 		return er
 	}
-	if isSame {
-		toPathTmp = toPath + "_" + strconv.FormatInt(time.Now().UnixMilli(), 10)
-		if outF, err = os.Create(toPathTmp); err != nil {
-			return fmt.Errorf(ErrCreateFile.Error()+" "+err.Error()+" %s\n", toPathTmp)
+	if params.isSame {
+		params.toPathTmp = toPath + "_" + strconv.FormatInt(time.Now().UnixMilli(), 10)
+		if params.outF, err = os.Create(params.toPathTmp); err != nil {
+			return fmt.Errorf(ErrCreateFile.Error()+" "+err.Error()+" %s\n", params.toPathTmp)
 		}
 	} else {
-		if outF, err = os.Create(toPath); err != nil {
+		if params.outF, err = os.Create(toPath); err != nil {
 			return fmt.Errorf(ErrCreateFile.Error()+" "+err.Error()+" %s\n", toPath)
 		}
 	}
@@ -161,28 +166,28 @@ func check(fromPath, toPath string, offset int64, size *int64) error {
 	return nil
 }
 
-func isTheSame(toPath string, inFInf *os.FileInfo) (bool, error) {
+func isTheSame(toPath string, inFInf *os.FileInfo, params *Params) (bool, error) {
 	var tmpInf os.FileInfo
 	var er error
 
-	if tmpF, er = os.Open(toPath); er != nil {
+	if params.tmpF, er = os.Open(toPath); er != nil {
 		if os.IsNotExist(er) {
 			return false, nil
 		}
 		return false, fmt.Errorf(ErrOpenFile.Error()+" "+er.Error()+" %s\n", toPath)
 	}
-	defer tmpF.Close()
-	if tmpInf, er = tmpF.Stat(); er != nil {
+	defer params.tmpF.Close()
+	if tmpInf, er = params.tmpF.Stat(); er != nil {
 		return false, fmt.Errorf(ErrFileStat.Error()+" "+er.Error()+" %s\n", toPath)
 	}
 	return os.SameFile(*inFInf, tmpInf), nil
 }
 
-func closeFiles() {
-	if !fIn {
-		inF.Close()
+func closeFiles(params *Params) {
+	if !params.fIn {
+		params.inF.Close()
 	}
-	if !fOut {
-		outF.Close()
+	if !params.fOut {
+		params.outF.Close()
 	}
 }
