@@ -70,7 +70,7 @@ func ReadDir(dir string) (Environment, error) {
 			if _, fErr = f.Read(buf); fErr != nil && !errors.Is(fErr, io.EOF) {
 				return nil, fErr
 			}
-			if buf[0] == 10 || errors.Is(fErr, io.EOF) {
+			if buf[0] == []byte(NewLine)[0] || errors.Is(fErr, io.EOF) {
 				break
 			}
 			envValue = append(envValue, buf[0])
