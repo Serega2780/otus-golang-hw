@@ -1,0 +1,16 @@
+goos: linux
+goarch: amd64
+pkg: github.com/Serega2780/otus-golang-hw/hw10_program_optimization
+cpu: 11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz
+BenchmarkGetDomainStat-8   	     303	   3352236 ns/op	 1068069 B/op	   10057 allocs/op
+BenchmarkGetDomainStat-8   	     280	   3709028 ns/op	 1155596 B/op	   10883 allocs/op
+BenchmarkGetDomainStat-8   	     328	   3254559 ns/op	  986273 B/op	    9291 allocs/op
+BenchmarkGetDomainStat-8   	     321	   3275736 ns/op	 1007996 B/op	    9494 allocs/op
+BenchmarkGetDomainStat-8   	     266	   3830481 ns/op	 1216508 B/op	   11455 allocs/op
+BenchmarkGetDomainStat-8   	     303	   3395153 ns/op	 1067823 B/op	   10057 allocs/op
+BenchmarkGetDomainStat-8   	     338	   3262160 ns/op	  957449 B/op	    9017 allocs/op
+BenchmarkGetDomainStat-8   	     346	   3168366 ns/op	  935121 B/op	    8808 allocs/op
+BenchmarkGetDomainStat-8   	     274	   3966332 ns/op	 1181423 B/op	   11121 allocs/op
+BenchmarkGetDomainStat-8   	     340	   3148782 ns/op	  951604 B/op	    8964 allocs/op
+PASS
+ok  	github.com/Serega2780/otus-golang-hw/hw10_program_optimization	65.529s
