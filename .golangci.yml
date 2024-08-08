@@ -32,6 +32,9 @@ linters-settings:
           - flag
           - bytes
           - regexp
+          - bufio
+          - github.com/goccy/go-json
+          - archive/zip
 
 
 issues:
