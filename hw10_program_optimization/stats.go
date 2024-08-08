@@ -12,6 +12,7 @@ import (
 
 const (
 	EmptyString = ""
+	Atsign      = "@"
 )
 
 type User struct {
@@ -49,7 +50,9 @@ func processData(r io.Reader, domain string) (result DomainStat, err error) {
 		if err = json.Unmarshal(content, user); err != nil {
 			continue
 		}
-		countDomains(*user, domain, &result)
+		if err = countDomains(*user, domain, &result); err != nil {
+			continue
+		}
 		user.resetUser()
 		userPool.Put(user)
 	}
@@ -59,11 +62,16 @@ func processData(r io.Reader, domain string) (result DomainStat, err error) {
 	return result, nil
 }
 
-func countDomains(user User, domain string, result *DomainStat) {
-	key := strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])
-	if strings.Contains(user.Email, domain) {
+func countDomains(user User, domain string, result *DomainStat) (err error) {
+	str := strings.SplitN(user.Email, Atsign, 2)
+	if len(str) < 2 {
+		return fmt.Errorf("invalid email: %s", user.Email)
+	}
+	key := strings.ToLower(str[1])
+	if strings.Contains(key, domain) {
 		(*result)[key]++
 	}
+	return nil
 }
 
 func (user *User) resetUser() {

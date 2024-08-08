@@ -2,15 +2,15 @@ goos: linux
 goarch: amd64
 pkg: github.com/Serega2780/otus-golang-hw/hw10_program_optimization
 cpu: 11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz
-BenchmarkGetDomainStat-8   	 1177836	       996.2 ns/op	    4163 B/op	       2 allocs/op
-BenchmarkGetDomainStat-8   	 1162708	      1005 ns/op	    4163 B/op	       2 allocs/op
-BenchmarkGetDomainStat-8   	 1161855	      1013 ns/op	    4163 B/op	       2 allocs/op
-BenchmarkGetDomainStat-8   	 1149620	      1009 ns/op	    4164 B/op	       2 allocs/op
-BenchmarkGetDomainStat-8   	 1146680	      1009 ns/op	    4164 B/op	       2 allocs/op
-BenchmarkGetDomainStat-8   	 1151642	      1024 ns/op	    4164 B/op	       2 allocs/op
-BenchmarkGetDomainStat-8   	 1149661	      1014 ns/op	    4164 B/op	       2 allocs/op
-BenchmarkGetDomainStat-8   	 1148365	      1013 ns/op	    4164 B/op	       2 allocs/op
-BenchmarkGetDomainStat-8   	 1145838	      1016 ns/op	    4164 B/op	       2 allocs/op
-BenchmarkGetDomainStat-8   	 1144953	      1012 ns/op	    4164 B/op	       2 allocs/op
+BenchmarkGetDomainStat-8   	 1171932	      1003 ns/op	    4163 B/op	       2 allocs/op
+BenchmarkGetDomainStat-8   	 1165387	      1011 ns/op	    4163 B/op	       2 allocs/op
+BenchmarkGetDomainStat-8   	 1168762	       997.0 ns/op	    4163 B/op	       2 allocs/op
+BenchmarkGetDomainStat-8   	 1166149	       993.9 ns/op	    4163 B/op	       2 allocs/op
+BenchmarkGetDomainStat-8   	 1162870	       994.8 ns/op	    4163 B/op	       2 allocs/op
+BenchmarkGetDomainStat-8   	 1165500	       998.3 ns/op	    4163 B/op	       2 allocs/op
+BenchmarkGetDomainStat-8   	 1162380	       998.6 ns/op	    4163 B/op	       2 allocs/op
+BenchmarkGetDomainStat-8   	 1162184	      1004 ns/op	    4163 B/op	       2 allocs/op
+BenchmarkGetDomainStat-8   	 1153765	      1024 ns/op	    4163 B/op	       2 allocs/op
+BenchmarkGetDomainStat-8   	 1161678	      1011 ns/op	    4163 B/op	       2 allocs/op
 PASS
-ok  	github.com/Serega2780/otus-golang-hw/hw10_program_optimization	34.053s
+ok  	github.com/Serega2780/otus-golang-hw/hw10_program_optimization	34.096s

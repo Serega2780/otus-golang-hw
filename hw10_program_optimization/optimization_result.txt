@@ -4,11 +4,11 @@ pkg: github.com/Serega2780/otus-golang-hw/hw10_program_optimization
 cpu: 11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz
                 │ ./before_optimization.txt │      ./after_optimization.txt       │
                 │          sec/op           │   sec/op     vs base                │
-GetDomainStat-8             3313.986µ ± 16%   1.013µ ± 1%  -99.97% (p=0.000 n=10)
+GetDomainStat-8             3313.986µ ± 16%   1.001µ ± 1%  -99.97% (p=0.000 n=10)
 
                 │ ./before_optimization.txt │       ./after_optimization.txt       │
                 │           B/op            │     B/op      vs base                │
-GetDomainStat-8            1013.583Ki ± 14%   4.066Ki ± 0%  -99.60% (p=0.000 n=10)
+GetDomainStat-8            1013.583Ki ± 14%   4.065Ki ± 0%  -99.60% (p=0.000 n=10)
 
                 │ ./before_optimization.txt │      ./after_optimization.txt      │
                 │         allocs/op         │ allocs/op   vs base                │
