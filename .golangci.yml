@@ -35,6 +35,8 @@ linters-settings:
           - bufio
           - github.com/goccy/go-json
           - archive/zip
+          - reflect
+          - encoding/json
 
 
 issues:
