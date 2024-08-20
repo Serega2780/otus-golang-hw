@@ -37,6 +37,8 @@ linters-settings:
           - archive/zip
           - reflect
           - encoding/json
+          - net
+          - syscall
 
 
 issues:
