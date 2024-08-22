@@ -52,27 +52,31 @@ func main() {
 		}
 	}(tc)
 
-	go func(tc TelnetClient) {
+	go func(tc *TelnetClient) {
 		for {
-			err := tc.Send()
+			err := (*tc).Send()
 			if err != nil {
 				_, _ = fmt.Fprintln(os.Stderr, err)
 			}
 		}
-	}(tc)
+	}(&tc)
 
-	go func() {
+	go func(tc *TelnetClient) {
 		ch := make(chan os.Signal, 1)
-		signal.Notify(ch, os.Interrupt, syscall.SIGTERM, syscall.SIGURG)
-		sig := <-ch
-		if sig == syscall.SIGURG {
-			_, _ = fmt.Fprintln(os.Stderr, "...EOF")
-			if err := tc.Close(); err != nil {
-				_, _ = fmt.Fprintln(os.Stderr, err)
+		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+		for {
+			select {
+			case <-ch:
+				os.Exit(1)
+			case <-(*tc).(*TC).abortCh:
+				_, _ = fmt.Fprintln(os.Stderr, "...EOF")
+				if err := (*tc).Close(); err != nil {
+					_, _ = fmt.Fprintln(os.Stderr, err)
+				}
+				os.Exit(0)
 			}
 		}
-		os.Exit(1)
-	}()
+	}(&tc)
 
 	<-stop
 }

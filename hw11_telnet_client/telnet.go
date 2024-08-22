@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -12,6 +14,7 @@ import (
 const (
 	TCP   = "tcp"
 	COLON = ":"
+	bSize = 1024
 )
 
 type TelnetClient interface {
@@ -27,11 +30,12 @@ type TC struct {
 	in      io.ReadCloser
 	out     io.Writer
 	conn    net.Conn
+	abortCh chan interface{}
 }
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
 	// Place your code here.
-	return &TC{address: address, timeout: timeout, in: in, out: out}
+	return &TC{address: address, timeout: timeout, in: in, out: out, abortCh: make(chan interface{})}
 }
 
 func (tc *TC) Connect() error {
@@ -57,10 +61,17 @@ func (tc *TC) Close() error {
 }
 
 func (tc *TC) Send() error {
-	_, err := io.Copy(tc.conn, tc.in)
-	if err != nil {
-		return err
+	buf := [bSize]byte{}
+	in, err := tc.in.Read(buf[:])
+	if errors.Is(err, io.EOF) {
+		close(tc.abortCh)
+	} else {
+		_, err = io.Copy(tc.conn, bytes.NewReader(buf[0:in]))
+		if err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 
