@@ -5,13 +5,13 @@ import (
 	"flag"
 	"os"
 	"os/signal"
-	"syscall"
+	"syscall"ate
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/app"
+	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/server/http"
+	memorystorage "github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/memory"
 )
 
 var configFile string
