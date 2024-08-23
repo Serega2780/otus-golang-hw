@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"net"
@@ -15,7 +16,10 @@ const (
 	TimeoutValue = 10
 )
 
-var timeout time.Duration
+var (
+	timeout        time.Duration
+	ErrEOFReceived = errors.New("ctrl + d signal received")
+)
 
 func init() {
 	flag.DurationVar(&timeout, "timeout", time.Duration(TimeoutValue*float64(time.Second)), "timeout to connect to server")
@@ -56,27 +60,26 @@ func main() {
 		for {
 			err := (*tc).Send()
 			if err != nil {
+				if errors.Is(err, ErrEOFReceived) {
+					_, _ = fmt.Fprintln(os.Stderr, "...EOF")
+					if err := (*tc).Close(); err != nil {
+						_, _ = fmt.Fprintln(os.Stderr, err)
+					}
+					os.Exit(0)
+				}
 				_, _ = fmt.Fprintln(os.Stderr, err)
 			}
 		}
 	}(&tc)
 
-	go func(tc *TelnetClient) {
+	go func() {
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
-		for {
-			select {
-			case <-ch:
-				os.Exit(1)
-			case <-(*tc).(*TC).abortCh:
-				_, _ = fmt.Fprintln(os.Stderr, "...EOF")
-				if err := (*tc).Close(); err != nil {
-					_, _ = fmt.Fprintln(os.Stderr, err)
-				}
-				os.Exit(0)
-			}
+		_, ok := <-ch
+		if !ok {
+			os.Exit(1)
 		}
-	}(&tc)
+	}()
 
 	<-stop
 }
