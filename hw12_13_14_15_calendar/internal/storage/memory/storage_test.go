@@ -3,6 +3,7 @@ package memorystorage
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -99,13 +100,17 @@ func TestStorage(t *testing.T) {
 		}
 		wg.Wait()
 
-		for _, e := range storage.db {
+		tmp := make(map[string]*model.Event)
+		for k, v := range storage.db {
+			tmp[k] = v
+		}
+
+		for _, e := range tmp {
 			wg.Add(1)
 			go func(wg *sync.WaitGroup, e *model.Event) {
 				defer wg.Done()
 				e.Title = "new short title"
-				err := storage.Remove(ctx, e.ID)
-				require.Nil(t, err)
+				require.Nil(t, storage.Remove(ctx, e.ID))
 			}(&wg, e)
 		}
 		wg.Wait()
@@ -131,21 +136,21 @@ func TestStorage(t *testing.T) {
 
 	t.Run("find by id", func(t *testing.T) {
 		var wg sync.WaitGroup
-		var id string
+		var id atomic.Pointer[string]
 		storage := New()
 		for _, e := range events {
 			wg.Add(1)
 			go func(wg *sync.WaitGroup, e model.Event) {
 				defer wg.Done()
 				o, _ := storage.Insert(ctx, &e)
-				id = o.ID
+				id.Store(&o.ID)
 			}(&wg, e)
 		}
 		wg.Wait()
 
-		e, err := storage.Find(ctx, id)
+		e, err := storage.Find(ctx, *id.Load())
 		require.Nil(t, err)
-		require.Equal(t, id, e.ID)
+		require.Equal(t, *id.Load(), e.ID)
 	})
 
 	t.Run("insert with non null id", func(t *testing.T) {
