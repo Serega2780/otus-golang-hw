@@ -1,4 +1,4 @@
-package internalhttp
+package http
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ import (
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/logger"
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/service/memory"
-	memorystorage "github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/memory"
+	service "github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/memory"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
@@ -24,7 +24,7 @@ import (
 func Test_Events(t *testing.T) {
 	ctx := context.Background()
 	l := logger.New(&config.LoggerConf{Level: "info", Format: "json", LogToFile: false, LogToConsole: true})
-	repo := memorystorage.New()
+	repo := service.New()
 	service := memory.NewEventMemoryService(repo)
 	h := NewEventsHandler(ctx, l, service)
 	r := mux.NewRouter()

@@ -6,14 +6,14 @@ import (
 
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/mapper"
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/model"
-	sqlstorage "github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 type EventSQLService struct {
-	eventsRepo *sqlstorage.Storage
+	eventsRepo *sql.Storage
 }
 
-func NewEventSQLService(repo *sqlstorage.Storage) *EventSQLService {
+func NewEventSQLService(repo *sql.Storage) *EventSQLService {
 	return &EventSQLService{eventsRepo: repo}
 }
 

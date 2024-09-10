@@ -8,11 +8,11 @@ import (
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/config"
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/logger"
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/service"
-	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/service/memory"
-	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/service/sql"
-	memorystorage "github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/memory"
+	sm "github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/service/memory"
+	ss "github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/service/sql"
+	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/memory"
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/repository"
-	sqlstorage "github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/sql"
 	"gopkg.in/yaml.v3"
 )
 
@@ -28,25 +28,25 @@ func Start(ctx context.Context, configFile string) *App {
 	log := logger.New(cfg.Logger)
 	app := &App{Cfg: cfg, Log: log}
 	if cfg.IsInMemory {
-		app.Storage = memorystorage.New()
-		app.EventsService = memory.NewEventMemoryService(app.Storage.(*memorystorage.Storage))
+		app.Storage = memory.New()
+		app.EventsService = sm.NewEventMemoryService(app.Storage.(*memory.Storage))
 	} else {
-		app.Storage = sqlstorage.New(cfg.DB)
+		app.Storage = sql.New(cfg.DB)
 	}
 	if !cfg.IsInMemory {
-		err := app.Storage.(*sqlstorage.Storage).Connect(ctx)
+		err := app.Storage.(*sql.Storage).Connect(ctx)
 		if err != nil {
 			app.Log.Errorf("failed to connect to Postgres %v", err)
 			os.Exit(1)
 		}
 		if len(cfg.DB.Migration) != 0 {
-			err := app.Storage.(*sqlstorage.Storage).Migrate(ctx)
+			err := app.Storage.(*sql.Storage).Migrate(ctx)
 			if err != nil {
 				app.Log.Errorf("failed to migrate db %v", err)
 				os.Exit(1)
 			}
 		}
-		app.EventsService = sql.NewEventSQLService(app.Storage.(*sqlstorage.Storage))
+		app.EventsService = ss.NewEventSQLService(app.Storage.(*sql.Storage))
 	}
 	app.Log.Info("calendar is running...")
 	return app

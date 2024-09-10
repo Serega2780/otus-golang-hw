@@ -11,8 +11,8 @@ import (
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/config"
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/logger"
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/model"
-	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/service/memory"
-	memorystorage "github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/memory"
+	service "github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/service/memory"
+	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/memory"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -25,8 +25,8 @@ import (
 func Test_Events(t *testing.T) {
 	ctx := context.Background()
 	l := logger.New(&config.LoggerConf{Level: "info", Format: "json", LogToFile: false, LogToConsole: true})
-	repo := memorystorage.New()
-	service := memory.NewEventMemoryService(repo)
+	repo := memory.New()
+	service := service.NewEventMemoryService(repo)
 
 	client, closer := server(ctx, l, service)
 	defer closer()
@@ -75,7 +75,7 @@ func Test_Events(t *testing.T) {
 	})
 }
 
-func server(ctx context.Context, l *logger.Logger, s *memory.EventMemoryService) (pb.EventServiceClient, func()) {
+func server(ctx context.Context, l *logger.Logger, s *service.EventMemoryService) (pb.EventServiceClient, func()) {
 	buffer := 101024 * 1024
 	lis := bufconn.Listen(buffer)
 	h := NewEventsHandler(l, s)

@@ -1,4 +1,4 @@
-package sqlstorage
+package sql
 
 import (
 	"context"
@@ -69,7 +69,7 @@ WHERE lower(duration) <@ $1::tsrange
 `
 )
 
-type Storage struct { // TODO
+type Storage struct {
 	db        *sql.DB
 	dsn       string
 	migration string

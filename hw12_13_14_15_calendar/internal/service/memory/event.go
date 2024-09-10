@@ -6,14 +6,14 @@ import (
 
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/mapper"
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/model"
-	memorystorage "github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/memory"
 )
 
 type EventMemoryService struct {
-	eventsRepo *memorystorage.Storage
+	eventsRepo *memory.Storage
 }
 
-func NewEventMemoryService(repo *memorystorage.Storage) *EventMemoryService {
+func NewEventMemoryService(repo *memory.Storage) *EventMemoryService {
 	return &EventMemoryService{eventsRepo: repo}
 }
 
