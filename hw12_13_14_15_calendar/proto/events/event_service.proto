@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package proto.events;
+
+option go_package = "api/pb";
+
+import "events/event_model.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+
+service EventService {
+
+  rpc CreateEvent(CreateEventRequest) returns (EventResponse) {
+    option (google.api.http) = {
+      post: "/v1/events"
+      body: "event"
+    };
+  }
+
+  rpc UpdateEvent(UpdateEventRequest) returns (EventResponse) {
+    option (google.api.http) = {
+      put: "/v1/events"
+      body: "event"
+    };
+  }
+
+  rpc RemoveEvent(RemoveEventRequest) returns (RemoveEventResponse) {
+    option (google.api.http) = {
+      delete: "/v1/events/{id}"
+    };
+  }
+
+  rpc FindEvent(FindEventRequest) returns (EventResponse) {
+    option (google.api.http) = {
+      get: "/v1/events/{id}"
+    };
+  }
+
+  rpc FindEventsByDay(GetEventByDate) returns (EventsResponse) {
+    option (google.api.http) = {
+      get: "/v1/events/day/{date}"
+    };
+  }
+
+  rpc FindEventsByWeek(GetEventByDate) returns (EventsResponse) {
+    option (google.api.http) = {
+      get: "/v1/events/week/{date}"
+    };
+  }
+
+  rpc FindEventsByMonth(GetEventByDate) returns (EventsResponse) {
+    option (google.api.http) = {
+      get: "/v1/events/month/{date}"
+    };
+  }
+
+  rpc FindEvents(google.protobuf.Empty) returns (EventsResponse) {
+    option (google.api.http) = {
+      get: "/v1/events"
+    };
+  }
+
+}
+
+message CreateEventRequest {
+  EventNew event = 1;
+}
+
+message UpdateEventRequest {
+  Event event = 1;
+}
+
+message EventResponse {
+  Event event = 1;
+}
+
+message FindEventRequest{
+  string id = 1;
+}
+
+message RemoveEventRequest{
+  string id = 1;
+}
+
+message RemoveEventResponse{
+  string id = 1;
+}
+
+message GetEventByDate{
+  google.protobuf.Timestamp date = 1;
+}
+
+message EventsResponse {
+  repeated Event events = 1;
+}

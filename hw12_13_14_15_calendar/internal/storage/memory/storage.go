@@ -3,19 +3,21 @@ package memorystorage
 import (
 	"context"
 	"sync"
+	"time"
 
-	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/model"
+	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/repository"
+	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/utils"
 	"github.com/google/uuid"
 )
 
 type Storage struct {
-	db  map[string]*model.Event
+	db  map[string]*model.DBEvent
 	dmu sync.RWMutex
 }
 
 func New() *Storage {
-	return &Storage{db: make(map[string]*model.Event)}
+	return &Storage{db: make(map[string]*model.DBEvent)}
 }
 
 func (s *Storage) Remove(_ context.Context, id string) (err error) {
@@ -25,24 +27,66 @@ func (s *Storage) Remove(_ context.Context, id string) (err error) {
 	return nil
 }
 
-func (s *Storage) Find(_ context.Context, id string) (*model.Event, error) {
+func (s *Storage) Find(_ context.Context, id string) (*model.DBEvent, error) {
 	s.dmu.RLock()
 	defer s.dmu.RUnlock()
 	return s.db[id], nil
 }
 
-func (s *Storage) FindAll(_ context.Context) ([]model.Event, error) {
+func (s *Storage) FindAll(_ context.Context) ([]*model.DBEvent, error) {
 	s.dmu.RLock()
 	defer s.dmu.RUnlock()
-	v := make([]model.Event, 0, len(s.db))
+	v := make([]*model.DBEvent, 0, len(s.db))
 
 	for _, value := range s.db {
-		v = append(v, *value)
+		v = append(v, value)
 	}
 	return v, nil
 }
 
-func (s *Storage) Update(_ context.Context, event *model.Event) (updatedEvent *model.Event, err error) {
+func (s *Storage) FindAllByDay(_ context.Context, date time.Time) ([]*model.DBEvent, error) {
+	s.dmu.RLock()
+	defer s.dmu.RUnlock()
+	v := make([]*model.DBEvent, 0, len(s.db))
+
+	startDay, endDay := utils.DayRange(date)
+	for _, value := range s.db {
+		if startDay.Before(value.StartTime) && endDay.After(value.StartTime) {
+			v = append(v, value)
+		}
+	}
+	return v, nil
+}
+
+func (s *Storage) FindAllByWeek(_ context.Context, date time.Time) ([]*model.DBEvent, error) {
+	s.dmu.RLock()
+	defer s.dmu.RUnlock()
+	v := make([]*model.DBEvent, 0, len(s.db))
+
+	startDay, endDay := utils.WeekRange(date)
+	for _, value := range s.db {
+		if startDay.Before(value.StartTime) && endDay.After(value.StartTime) {
+			v = append(v, value)
+		}
+	}
+	return v, nil
+}
+
+func (s *Storage) FindAllByMonth(_ context.Context, date time.Time) ([]*model.DBEvent, error) {
+	s.dmu.RLock()
+	defer s.dmu.RUnlock()
+	v := make([]*model.DBEvent, 0, len(s.db))
+
+	startDay, endDay := utils.MonthRange(date)
+	for _, value := range s.db {
+		if startDay.Before(value.StartTime) && endDay.After(value.StartTime) {
+			v = append(v, value)
+		}
+	}
+	return v, nil
+}
+
+func (s *Storage) Update(_ context.Context, event *model.DBEvent) (updatedEvent *model.DBEvent, err error) {
 	s.dmu.Lock()
 	defer s.dmu.Unlock()
 	if err := s.IsOccupied(event); err != nil {
@@ -52,7 +96,7 @@ func (s *Storage) Update(_ context.Context, event *model.Event) (updatedEvent *m
 	return s.db[event.ID], nil
 }
 
-func (s *Storage) Insert(_ context.Context, event *model.Event) (newEvent *model.Event, err error) {
+func (s *Storage) Insert(_ context.Context, event *model.DBEvent) (newEvent *model.DBEvent, err error) {
 	s.dmu.Lock()
 	defer s.dmu.Unlock()
 	if err := s.IsOccupied(event); err != nil {
@@ -66,7 +110,7 @@ func (s *Storage) Insert(_ context.Context, event *model.Event) (newEvent *model
 	return s.db[event.ID], nil
 }
 
-func (s *Storage) IsOccupied(event *model.Event) error {
+func (s *Storage) IsOccupied(event *model.DBEvent) error {
 	for id, ev := range s.db {
 		if id == event.ID {
 			continue

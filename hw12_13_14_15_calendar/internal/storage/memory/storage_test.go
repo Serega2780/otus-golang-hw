@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/model"
+	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/repository"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -21,7 +21,7 @@ var (
 	tmE, _  = time.Parse(time.RFC3339, "2024-08-28T11:00:00Z")
 	tmE2, _ = time.Parse(time.RFC3339, "2024-08-28T13:00:00Z")
 	tmE3, _ = time.Parse(time.RFC3339, "2024-08-28T15:00:00Z")
-	events  = []model.Event{
+	events  = []model.DBEvent{
 		{
 			Title:       "1st event",
 			StartTime:   tm,
@@ -52,7 +52,7 @@ func TestStorage(t *testing.T) {
 		storage := New()
 		for _, e := range events {
 			wg.Add(1)
-			go func(wg *sync.WaitGroup, e model.Event) {
+			go func(wg *sync.WaitGroup, e model.DBEvent) {
 				defer wg.Done()
 				o, err := storage.Insert(ctx, &e)
 				require.Nil(t, err)
@@ -68,7 +68,7 @@ func TestStorage(t *testing.T) {
 		storage := New()
 		for _, e := range events {
 			wg.Add(1)
-			go func(wg *sync.WaitGroup, e model.Event) {
+			go func(wg *sync.WaitGroup, e model.DBEvent) {
 				defer wg.Done()
 				_, _ = storage.Insert(ctx, &e)
 			}(&wg, e)
@@ -77,7 +77,7 @@ func TestStorage(t *testing.T) {
 
 		for _, e := range storage.db {
 			wg.Add(1)
-			go func(wg *sync.WaitGroup, e *model.Event) {
+			go func(wg *sync.WaitGroup, e *model.DBEvent) {
 				defer wg.Done()
 				e.Title = "new short title"
 				o, err := storage.Update(ctx, e)
@@ -93,21 +93,21 @@ func TestStorage(t *testing.T) {
 		storage := New()
 		for _, e := range events {
 			wg.Add(1)
-			go func(wg *sync.WaitGroup, e model.Event) {
+			go func(wg *sync.WaitGroup, e model.DBEvent) {
 				defer wg.Done()
 				_, _ = storage.Insert(ctx, &e)
 			}(&wg, e)
 		}
 		wg.Wait()
 
-		tmp := make(map[string]*model.Event)
+		tmp := make(map[string]*model.DBEvent)
 		for k, v := range storage.db {
 			tmp[k] = v
 		}
 
 		for _, e := range tmp {
 			wg.Add(1)
-			go func(wg *sync.WaitGroup, e *model.Event) {
+			go func(wg *sync.WaitGroup, e *model.DBEvent) {
 				defer wg.Done()
 				e.Title = "new short title"
 				require.Nil(t, storage.Remove(ctx, e.ID))
@@ -122,7 +122,7 @@ func TestStorage(t *testing.T) {
 		storage := New()
 		for _, e := range events {
 			wg.Add(1)
-			go func(wg *sync.WaitGroup, e model.Event) {
+			go func(wg *sync.WaitGroup, e model.DBEvent) {
 				defer wg.Done()
 				_, _ = storage.Insert(ctx, &e)
 			}(&wg, e)
@@ -140,7 +140,7 @@ func TestStorage(t *testing.T) {
 		storage := New()
 		for _, e := range events {
 			wg.Add(1)
-			go func(wg *sync.WaitGroup, e model.Event) {
+			go func(wg *sync.WaitGroup, e model.DBEvent) {
 				defer wg.Done()
 				o, _ := storage.Insert(ctx, &e)
 				id.Store(&o.ID)
@@ -158,7 +158,7 @@ func TestStorage(t *testing.T) {
 		storage := New()
 		for _, e := range events {
 			wg.Add(1)
-			go func(wg *sync.WaitGroup, e model.Event) {
+			go func(wg *sync.WaitGroup, e model.DBEvent) {
 				defer wg.Done()
 				_, _ = storage.Insert(ctx, &e)
 			}(&wg, e)
@@ -166,7 +166,7 @@ func TestStorage(t *testing.T) {
 		wg.Wait()
 
 		tmp := tm.Add(15 * time.Minute)
-		newEvent := model.Event{
+		newEvent := model.DBEvent{
 			ID:          uuid.New().String(),
 			Title:       "4th event",
 			StartTime:   tmp,
@@ -183,7 +183,7 @@ func TestStorage(t *testing.T) {
 		storage := New()
 		for _, e := range events {
 			wg.Add(1)
-			go func(wg *sync.WaitGroup, e model.Event) {
+			go func(wg *sync.WaitGroup, e model.DBEvent) {
 				defer wg.Done()
 				_, _ = storage.Insert(ctx, &e)
 			}(&wg, e)
@@ -191,7 +191,7 @@ func TestStorage(t *testing.T) {
 		wg.Wait()
 
 		tmp := tm.Add(15 * time.Minute)
-		newEvent := model.Event{
+		newEvent := model.DBEvent{
 			Title:       "4th event",
 			StartTime:   tmp,
 			EndTime:     tm.Add(time.Hour),
@@ -203,7 +203,7 @@ func TestStorage(t *testing.T) {
 	})
 
 	t.Run("update with already occupied time range", func(t *testing.T) {
-		var ev *model.Event
+		var ev *model.DBEvent
 		tm4, _ := time.Parse(time.RFC3339, "2024-08-28T12:59:00Z")
 		storage := New()
 		for _, e := range events {

@@ -41,14 +41,30 @@ linters-settings:
           - net
           - syscall
           - github.com/sirupsen/logrus
+          - github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/api/pb
           - github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/logger
+          - github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/mapper
+          - github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/model
+          - github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/service
           - github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/sql
           - github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/repository
           - github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/memory
           - github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/model
           - github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/server/http
+          - github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/server/grpc
           - github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/config
           - github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/app
+          - github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/utils
+          - google.golang.org/protobuf/types/known/timestamppb
+          - google.golang.org/protobuf/types/known/emptypb
+          - google.golang.org/grpc/test/bufconn
+          - github.com/go-kit/log
+          - github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging
+          - google.golang.org/grpc/reflection
+          - github.com/golang/protobuf/ptypes/empty
+          - google.golang.org/grpc/status
+          - google.golang.org/grpc
+          - github.com/gorilla/mux
           - gopkg.in/yaml.v3
           - github.com/pressly/goose/v3
           - github.com/jackc/pgx/v4/stdlib

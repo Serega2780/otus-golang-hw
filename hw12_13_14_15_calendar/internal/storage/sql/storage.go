@@ -7,8 +7,9 @@ import (
 	"time"
 
 	cfg "github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/config"
-	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/model"
+	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/model"
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/repository"
+	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/utils"
 	_ "github.com/jackc/pgx/v4/stdlib" // golint
 	"github.com/pressly/goose/v3"
 )
@@ -60,6 +61,12 @@ where id != $2
 )t
 where b = true
 `
+	FindByRange = `
+SELECT id, title, lower(duration) as start_time, upper(duration) as end_time, description, user_id,
+       notify_before_event
+FROM events
+WHERE lower(duration) <@ $1::tsrange
+`
 )
 
 type Storage struct { // TODO
@@ -108,8 +115,8 @@ func (s *Storage) Remove(ctx context.Context, id string) (err error) {
 	return fail(err)
 }
 
-func (s *Storage) Find(ctx context.Context, id string) (*model.Event, error) {
-	fail := func(e error) (*model.Event, error) {
+func (s *Storage) Find(ctx context.Context, id string) (*model.DBEvent, error) {
+	fail := func(e error) (*model.DBEvent, error) {
 		return nil, fmt.Errorf("FindByIdEvent %w", e)
 	}
 
@@ -117,9 +124,10 @@ func (s *Storage) Find(ctx context.Context, id string) (*model.Event, error) {
 	var startTime, endTime sql.NullTime
 	var notify sql.NullInt64
 	var descr sql.NullString
-	var ev model.Event
+	var ev model.DBEvent
 
-	err := row.Scan(&ev.ID,
+	err := row.Scan(
+		&ev.ID,
 		&ev.Title,
 		&startTime,
 		&endTime,
@@ -146,8 +154,8 @@ func (s *Storage) Find(ctx context.Context, id string) (*model.Event, error) {
 	return &ev, nil
 }
 
-func (s *Storage) FindAll(ctx context.Context) ([]model.Event, error) {
-	fail := func(e error) ([]model.Event, error) {
+func (s *Storage) FindAll(ctx context.Context) ([]*model.DBEvent, error) {
+	fail := func(e error) ([]*model.DBEvent, error) {
 		return nil, fmt.Errorf("FindAllEvents %w", e)
 	}
 
@@ -157,45 +165,71 @@ func (s *Storage) FindAll(ctx context.Context) ([]model.Event, error) {
 	}
 	defer rows.Close()
 
-	var events []model.Event
-
-	for rows.Next() {
-		var ev model.Event
-
-		var startTime, endTime sql.NullTime
-		var descr sql.NullString
-		var notify sql.NullInt64
-
-		if err := rows.Scan(
-			&ev.ID,
-			&ev.Title,
-			&startTime,
-			&endTime,
-			&descr,
-			&ev.UserID,
-			&notify,
-		); err != nil {
-			return fail(err)
-		}
-
-		if descr.Valid {
-			ev.Description = descr.String
-		}
-		if startTime.Valid {
-			ev.StartTime = startTime.Time
-		}
-		if endTime.Valid {
-			ev.EndTime = endTime.Time
-		}
-		if notify.Valid {
-			ev.NotifyBeforeEvent = time.Duration(notify.Int64)
-		}
-		events = append(events, ev)
+	events, er := findRequestHandler(rows)
+	if er != nil {
+		return fail(er)
 	}
 	return events, nil
 }
 
-func (s *Storage) Update(ctx context.Context, event *model.Event) (updatedEvent *model.Event, err error) {
+func (s *Storage) FindAllByDay(ctx context.Context, date time.Time) ([]*model.DBEvent, error) {
+	fail := func(e error) ([]*model.DBEvent, error) {
+		return nil, fmt.Errorf("FindByDayRange %w", e)
+	}
+	b, e := utils.DayRange(date)
+	r := makePostgresDuration(b, e)
+	rows, err := s.db.QueryContext(ctx, FindByRange, r)
+	if err != nil {
+		return fail(err)
+	}
+	defer rows.Close()
+
+	events, er := findRequestHandler(rows)
+	if er != nil {
+		return fail(er)
+	}
+	return events, nil
+}
+
+func (s *Storage) FindAllByWeek(ctx context.Context, date time.Time) ([]*model.DBEvent, error) {
+	fail := func(e error) ([]*model.DBEvent, error) {
+		return nil, fmt.Errorf("FindByDayRange %w", e)
+	}
+	b, e := utils.WeekRange(date)
+	r := makePostgresDuration(b, e)
+	rows, err := s.db.QueryContext(ctx, FindByRange, r)
+	if err != nil {
+		return fail(err)
+	}
+	defer rows.Close()
+
+	events, er := findRequestHandler(rows)
+	if er != nil {
+		return fail(er)
+	}
+	return events, nil
+}
+
+func (s *Storage) FindAllByMonth(ctx context.Context, date time.Time) ([]*model.DBEvent, error) {
+	fail := func(e error) ([]*model.DBEvent, error) {
+		return nil, fmt.Errorf("FindByDayRange %w", e)
+	}
+	b, e := utils.MonthRange(date)
+	r := makePostgresDuration(b, e)
+	rows, err := s.db.QueryContext(ctx, FindByRange, r)
+	if err != nil {
+		return fail(err)
+	}
+	defer rows.Close()
+
+	events, er := findRequestHandler(rows)
+	if er != nil {
+		return fail(er)
+	}
+	return events, nil
+}
+
+func (s *Storage) Update(ctx context.Context, event *model.DBEvent) (updatedEvent *model.DBEvent, err error) {
 	fail := func(e error) error {
 		return fmt.Errorf("UpdateEvent %w", e)
 	}
@@ -232,7 +266,7 @@ func (s *Storage) Update(ctx context.Context, event *model.Event) (updatedEvent 
 	if err != nil {
 		return nil, fail(err)
 	}
-	var ev *model.Event
+	var ev *model.DBEvent
 
 	err = tx.Commit()
 	if err != nil {
@@ -247,7 +281,7 @@ func (s *Storage) Update(ctx context.Context, event *model.Event) (updatedEvent 
 	return ev, nil
 }
 
-func (s *Storage) Insert(ctx context.Context, event *model.Event) (newEvent *model.Event, err error) {
+func (s *Storage) Insert(ctx context.Context, event *model.DBEvent) (newEvent *model.DBEvent, err error) {
 	fail := func(e error) error {
 		return fmt.Errorf("CreateEvent %w", e)
 	}
@@ -282,7 +316,7 @@ func (s *Storage) Insert(ctx context.Context, event *model.Event) (newEvent *mod
 	if err != nil {
 		return nil, fail(err)
 	}
-	var ev *model.Event
+	var ev *model.DBEvent
 
 	err = tx.Commit()
 	if err != nil {
@@ -302,9 +336,8 @@ func getDsn(conf *cfg.DBConf) string {
 		conf.User, conf.Password, conf.Dbname, conf.Host, conf.Port)
 }
 
-func checkForIntersection(ctx context.Context, tx *sql.Tx, event *model.Event, query string) (bool, string, error) {
-	dur := fmt.Sprintf("%s%s%s%s%s", LeftSquare, event.StartTime.Format(time.RFC3339), COMMA,
-		event.EndTime.Format(time.RFC3339), RightSquare)
+func checkForIntersection(ctx context.Context, tx *sql.Tx, event *model.DBEvent, query string) (bool, string, error) {
+	dur := makePostgresDuration(event.StartTime, event.EndTime)
 	var row *sql.Row
 	if query == CheckForIntersection {
 		row = tx.QueryRowContext(ctx, query, dur)
@@ -320,4 +353,48 @@ func checkForIntersection(ctx context.Context, tx *sql.Tx, event *model.Event, q
 		return true, dur, nil
 	}
 	return false, dur, nil
+}
+
+func makePostgresDuration(start time.Time, end time.Time) string {
+	return fmt.Sprintf("%s%s%s%s%s", LeftSquare, start.Format(time.RFC3339), COMMA,
+		end.Format(time.RFC3339), RightSquare)
+}
+
+func findRequestHandler(rows *sql.Rows) ([]*model.DBEvent, error) {
+	var events []*model.DBEvent
+
+	for rows.Next() {
+		ev := model.NewDBEvent()
+
+		var startTime, endTime sql.NullTime
+		var descr sql.NullString
+		var notify sql.NullInt64
+
+		if err := rows.Scan(
+			&ev.ID,
+			&ev.Title,
+			&startTime,
+			&endTime,
+			&descr,
+			&ev.UserID,
+			&notify,
+		); err != nil {
+			return nil, err
+		}
+
+		if descr.Valid {
+			ev.Description = descr.String
+		}
+		if startTime.Valid {
+			ev.StartTime = startTime.Time
+		}
+		if endTime.Valid {
+			ev.EndTime = endTime.Time
+		}
+		if notify.Valid {
+			ev.NotifyBeforeEvent = time.Duration(notify.Int64)
+		}
+		events = append(events, ev)
+	}
+	return events, nil
 }

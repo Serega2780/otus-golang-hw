@@ -8,7 +8,7 @@ type Config struct {
 	IsInMemory bool `split_words:"true" default:"true" yaml:"isInMemory"`
 	DB         *DBConf
 	HTTP       *HTTPServerConfig
-	// TODO
+	GRPC       *GRPCServerConfig
 }
 
 type LoggerConf struct {
@@ -33,11 +33,17 @@ type HTTPServerConfig struct {
 	Port string `default:"8585" yaml:"port"`
 }
 
+type GRPCServerConfig struct {
+	IP   string `default:"0.0.0.0" yaml:"ip"`
+	Port string `default:"6565" yaml:"port"`
+}
+
 func New() *Config {
 	return &Config{
 		IsInMemory: true,
 		Logger:     &LoggerConf{Level: "info", Format: "text", LogToFile: false, LogToConsole: true},
 		DB:         &DBConf{},
 		HTTP:       &HTTPServerConfig{IP: "0.0.0.0", Port: "8585"},
+		GRPC:       &GRPCServerConfig{IP: "0.0.0.0", Port: "6565"},
 	}
 }

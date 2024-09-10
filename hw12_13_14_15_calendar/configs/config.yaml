@@ -17,3 +17,7 @@ db:
 http:
   ip: 0.0.0.0
   port: 8585
+
+grpc:
+  ip: 0.0.0.0
+  port: 6565
