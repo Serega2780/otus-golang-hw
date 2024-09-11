@@ -21,6 +21,7 @@ type App struct { // TODO
 	Log           *logger.Logger
 	Storage       repository.EventInterface
 	EventsService service.EventService
+	SQLStorage    *sql.Storage
 }
 
 func Start(ctx context.Context, configFile string) *App {
@@ -31,7 +32,8 @@ func Start(ctx context.Context, configFile string) *App {
 		app.Storage = memory.New()
 		app.EventsService = sm.NewEventMemoryService(app.Storage.(*memory.Storage))
 	} else {
-		app.Storage = sql.New(cfg.DB)
+		app.SQLStorage = sql.New(cfg.DB)
+		app.Storage = app.SQLStorage
 	}
 	if !cfg.IsInMemory {
 		err := app.Storage.(*sql.Storage).Connect(ctx)

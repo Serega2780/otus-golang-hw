@@ -10,7 +10,6 @@ import (
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/app"
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/server/grpc"
 	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/server/http"
-	"github.com/Serega2780/otus-golang-hw/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 var (
@@ -51,8 +50,8 @@ func main() {
 	}()
 	wg.Wait()
 
-	if s, ok := (calendar.Storage).(*sql.Storage); ok {
-		if err := s.Close(); err != nil {
+	if calendar.SQLStorage != nil {
+		if err := calendar.SQLStorage.Close(); err != nil {
 			calendar.Log.Errorf("failed to close Postgres connection %v", err)
 		} else {
 			calendar.Log.Info("Postgres connection closed")
