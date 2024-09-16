@@ -36,8 +36,8 @@ func New(conf *cfg.LoggerConf) *Logger {
 			log.Errorf("Unable to create log file %s", err.Error())
 			os.Exit(1)
 		}
-		var b bool
-		switch b {
+
+		switch {
 		case conf.LogToConsole && conf.LogToFile:
 			log.SetOutput(io.MultiWriter(file, os.Stdout))
 		case conf.LogToConsole:
@@ -48,6 +48,10 @@ func New(conf *cfg.LoggerConf) *Logger {
 	}
 
 	return &Logger{log: log}
+}
+
+func (l *Logger) GetWriter() io.Writer {
+	return l.log.Out
 }
 
 func (l *Logger) Errorf(format string, args ...interface{}) {
