@@ -30,6 +30,20 @@ func EventGRPC(event *model.Event) *pb.EventResponse {
 	}}
 }
 
+func Notifications(events *pb.EventsResponse) []*pb.Notification {
+	response := make([]*pb.Notification, 0)
+	for _, e := range events.Events {
+		response = append(response, &pb.Notification{
+			Id:        e.Id,
+			Title:     e.Title,
+			StartTime: e.StartTime,
+			UserId:    e.UserId,
+		})
+	}
+
+	return response
+}
+
 func GRPCEventCreate(ge *pb.CreateEventRequest) *model.Event {
 	return &model.Event{
 		Title: ge.Event.Title, StartTime: ge.Event.StartTime.AsTime(),

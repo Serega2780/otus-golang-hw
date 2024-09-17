@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package proto.events;
+
+option go_package = "api/pb";
+
+import "google/protobuf/timestamp.proto";
+
+
+message Notification {
+  string id = 1;
+  string title = 2;
+  google.protobuf.Timestamp start_time = 3;
+  string user_id = 6;
+}

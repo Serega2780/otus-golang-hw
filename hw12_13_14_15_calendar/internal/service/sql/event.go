@@ -29,6 +29,22 @@ func (ess *EventSQLService) FindEvent(ctx context.Context, id string) (*model.Ev
 	return mapper.Event(dbe), nil
 }
 
+func (ess *EventSQLService) FindForNotify(ctx context.Context) ([]*model.Event, error) {
+	dbes, err := ess.eventsRepo.FindForNotify(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return mapper.Events(dbes), nil
+}
+
+func (ess *EventSQLService) SetNotified(ctx context.Context, id string) (string, error) {
+	eid, err := ess.eventsRepo.SetNotified(ctx, id)
+	if err != nil {
+		return id, err
+	}
+	return eid, nil
+}
+
 func (ess *EventSQLService) FindAllEvents(ctx context.Context) ([]*model.Event, error) {
 	dbes, err := ess.eventsRepo.FindAll(ctx)
 	if err != nil {

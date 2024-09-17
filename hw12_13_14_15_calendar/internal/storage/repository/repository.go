@@ -19,6 +19,8 @@ type EventInterface interface {
 	Remove(ctx context.Context, id string) (err error)
 	Find(ctx context.Context, id string) (*model.DBEvent, error)
 	FindAll(ctx context.Context) ([]*model.DBEvent, error)
+	FindForNotify(ctx context.Context) ([]*model.DBEvent, error)
+	SetNotified(ctx context.Context, id string) (string, error)
 	FindAllByDay(ctx context.Context, date time.Time) ([]*model.DBEvent, error)
 	FindAllByWeek(ctx context.Context, date time.Time) ([]*model.DBEvent, error)
 	FindAllByMonth(ctx context.Context, date time.Time) ([]*model.DBEvent, error)

@@ -87,3 +87,19 @@ func (s *EventsHandler) FindEvents(ctx context.Context, _ *empty.Empty) (*pb.Eve
 	}
 	return mapper.EventsGRPC(events), nil
 }
+
+func (s *EventsHandler) FindForNotify(ctx context.Context, _ *empty.Empty) (*pb.EventsResponse, error) {
+	events, err := s.service.FindForNotify(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%v", err)
+	}
+	return mapper.EventsGRPC(events), nil
+}
+
+func (s *EventsHandler) SetNotified(ctx context.Context, req *pb.SetNotifiedRequest) (*pb.SetNotifiedResponse, error) {
+	eid, err := s.service.SetNotified(ctx, req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "%v", err)
+	}
+	return &pb.SetNotifiedResponse{Id: eid}, nil
+}

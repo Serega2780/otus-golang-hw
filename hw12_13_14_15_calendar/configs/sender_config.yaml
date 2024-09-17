@@ -1,0 +1,11 @@
+logger:
+  level: info
+  format: json
+  file: calendar_sender.log
+  logToFile: true
+  logToConsole: true
+
+amqp:
+  ip: 0.0.0.0
+  port: 5672
+  queueName: event_notify

@@ -134,6 +134,38 @@ func (s *EventsHandler) FindEventByID(w http.ResponseWriter, r *http.Request) {
 	s.respondWithJSON(w, r, http.StatusOK, event)
 }
 
+func (s *EventsHandler) FindForNotify(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		s.writeMethodNotAllowedResponse(w, r)
+		return
+	}
+	events, err := s.service.FindForNotify(s.ctx)
+	if err != nil {
+		s.respondWithError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+	s.respondWithJSON(w, r, http.StatusOK, events)
+}
+
+func (s *EventsHandler) SetNotified(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		s.writeMethodNotAllowedResponse(w, r)
+		return
+	}
+	muxVar := mux.Vars(r)
+	id := muxVar["id"]
+	if len(id) == 0 {
+		s.respondWithError(w, r, http.StatusBadRequest, "path variable id is missing")
+		return
+	}
+	eid, err := s.service.SetNotified(s.ctx, id)
+	if err != nil {
+		s.respondWithError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+	s.respondWithJSON(w, r, http.StatusOK, map[string]string{EventID: eid})
+}
+
 func (s *EventsHandler) FindAllEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		s.writeMethodNotAllowedResponse(w, r)

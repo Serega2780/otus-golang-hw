@@ -35,9 +35,11 @@ func (s *Server) Start(ctx context.Context) {
 	r.HandleFunc("/v1/events/{id}", h.DeleteEvent).Methods(http.MethodDelete)
 	r.HandleFunc("/v1/events/{id}", h.FindEventByID).Methods(http.MethodGet)
 	r.HandleFunc("/v1/events", h.FindAllEvent).Methods(http.MethodGet)
+	r.HandleFunc("/v1/events/notify", h.FindForNotify).Methods(http.MethodGet)
 	r.HandleFunc("/v1/events/day/{date}", h.FindAllEventByDay).Methods(http.MethodGet)
 	r.HandleFunc("/v1/events/week/{date}", h.FindAllEventByWeek).Methods(http.MethodGet)
 	r.HandleFunc("/v1/events/month/{date}", h.FindAllEventByMonth).Methods(http.MethodGet)
+	r.HandleFunc("/v1/events/notify/{id}", h.SetNotified).Methods(http.MethodPut)
 	r.Use(s.loggingMiddleware)
 	server := &http.Server{
 		Addr:              strings.Join([]string{s.ip, s.port}, ":"),

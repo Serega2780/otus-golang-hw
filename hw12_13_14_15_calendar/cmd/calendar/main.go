@@ -18,7 +18,8 @@ var (
 )
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.yaml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "/etc/calendar/calendar_config.yaml",
+		"Path to configuration file")
 }
 
 func main() {
