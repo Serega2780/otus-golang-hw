@@ -1,0 +1,17 @@
+logger:
+  level: info
+  format: json
+  file: calendar_scheduler.log
+  logToFile: true
+  logToConsole: true
+
+schedulerPeriodSeconds: 5
+
+amqp:
+  ip: 0.0.0.0
+  port: 5672
+  queueName: event_notify
+
+grpc:
+  ip: 0.0.0.0
+  port: 6565

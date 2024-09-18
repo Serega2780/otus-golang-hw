@@ -28,6 +28,8 @@ const (
 	EventService_FindEventsByWeek_FullMethodName  = "/proto.events.EventService/FindEventsByWeek"
 	EventService_FindEventsByMonth_FullMethodName = "/proto.events.EventService/FindEventsByMonth"
 	EventService_FindEvents_FullMethodName        = "/proto.events.EventService/FindEvents"
+	EventService_FindForNotify_FullMethodName     = "/proto.events.EventService/FindForNotify"
+	EventService_SetNotified_FullMethodName       = "/proto.events.EventService/SetNotified"
 )
 
 // EventServiceClient is the client API for EventService service.
@@ -42,6 +44,8 @@ type EventServiceClient interface {
 	FindEventsByWeek(ctx context.Context, in *GetEventByDate, opts ...grpc.CallOption) (*EventsResponse, error)
 	FindEventsByMonth(ctx context.Context, in *GetEventByDate, opts ...grpc.CallOption) (*EventsResponse, error)
 	FindEvents(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*EventsResponse, error)
+	FindForNotify(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*EventsResponse, error)
+	SetNotified(ctx context.Context, in *SetNotifiedRequest, opts ...grpc.CallOption) (*SetNotifiedResponse, error)
 }
 
 type eventServiceClient struct {
@@ -132,6 +136,26 @@ func (c *eventServiceClient) FindEvents(ctx context.Context, in *empty.Empty, op
 	return out, nil
 }
 
+func (c *eventServiceClient) FindForNotify(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*EventsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EventsResponse)
+	err := c.cc.Invoke(ctx, EventService_FindForNotify_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eventServiceClient) SetNotified(ctx context.Context, in *SetNotifiedRequest, opts ...grpc.CallOption) (*SetNotifiedResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetNotifiedResponse)
+	err := c.cc.Invoke(ctx, EventService_SetNotified_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EventServiceServer is the server API for EventService service.
 // All implementations must embed UnimplementedEventServiceServer
 // for forward compatibility.
@@ -144,6 +168,8 @@ type EventServiceServer interface {
 	FindEventsByWeek(context.Context, *GetEventByDate) (*EventsResponse, error)
 	FindEventsByMonth(context.Context, *GetEventByDate) (*EventsResponse, error)
 	FindEvents(context.Context, *empty.Empty) (*EventsResponse, error)
+	FindForNotify(context.Context, *empty.Empty) (*EventsResponse, error)
+	SetNotified(context.Context, *SetNotifiedRequest) (*SetNotifiedResponse, error)
 	mustEmbedUnimplementedEventServiceServer()
 }
 
@@ -177,6 +203,12 @@ func (UnimplementedEventServiceServer) FindEventsByMonth(context.Context, *GetEv
 }
 func (UnimplementedEventServiceServer) FindEvents(context.Context, *empty.Empty) (*EventsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindEvents not implemented")
+}
+func (UnimplementedEventServiceServer) FindForNotify(context.Context, *empty.Empty) (*EventsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindForNotify not implemented")
+}
+func (UnimplementedEventServiceServer) SetNotified(context.Context, *SetNotifiedRequest) (*SetNotifiedResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetNotified not implemented")
 }
 func (UnimplementedEventServiceServer) mustEmbedUnimplementedEventServiceServer() {}
 func (UnimplementedEventServiceServer) testEmbeddedByValue()                      {}
@@ -343,6 +375,42 @@ func _EventService_FindEvents_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EventService_FindForNotify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EventServiceServer).FindForNotify(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EventService_FindForNotify_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EventServiceServer).FindForNotify(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EventService_SetNotified_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetNotifiedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EventServiceServer).SetNotified(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EventService_SetNotified_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EventServiceServer).SetNotified(ctx, req.(*SetNotifiedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EventService_ServiceDesc is the grpc.ServiceDesc for EventService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -381,6 +449,14 @@ var EventService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FindEvents",
 			Handler:    _EventService_FindEvents_Handler,
+		},
+		{
+			MethodName: "FindForNotify",
+			Handler:    _EventService_FindForNotify_Handler,
+		},
+		{
+			MethodName: "SetNotified",
+			Handler:    _EventService_SetNotified_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

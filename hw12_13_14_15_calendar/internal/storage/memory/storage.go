@@ -44,6 +44,25 @@ func (s *Storage) FindAll(_ context.Context) ([]*model.DBEvent, error) {
 	return v, nil
 }
 
+func (s *Storage) FindForNotify(_ context.Context) ([]*model.DBEvent, error) {
+	now := time.Now()
+	s.dmu.RLock()
+	defer s.dmu.RUnlock()
+	v := make([]*model.DBEvent, 0, len(s.db))
+
+	for _, value := range s.db {
+		nbe := value.NotifyBeforeEvent
+		if nbe != 0 && now.Add(nbe).After(value.StartTime) {
+			v = append(v, value)
+		}
+	}
+	return v, nil
+}
+
+func (s *Storage) SetNotified(_ context.Context, id string) (string, error) {
+	return id, nil
+}
+
 func (s *Storage) FindAllByDay(_ context.Context, date time.Time) ([]*model.DBEvent, error) {
 	s.dmu.RLock()
 	defer s.dmu.RUnlock()

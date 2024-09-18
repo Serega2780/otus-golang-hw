@@ -62,6 +62,18 @@ service EventService {
     };
   }
 
+  rpc FindForNotify(google.protobuf.Empty) returns (EventsResponse) {
+    option (google.api.http) = {
+      get: "/v1/events/notify"
+    };
+  }
+
+  rpc SetNotified(SetNotifiedRequest) returns (SetNotifiedResponse) {
+    option (google.api.http) = {
+      put: "/v1/events/notify/{id}"
+    };
+  }
+
 }
 
 message CreateEventRequest {
@@ -81,6 +93,14 @@ message FindEventRequest{
 }
 
 message RemoveEventRequest{
+  string id = 1;
+}
+
+message SetNotifiedRequest{
+  string id = 1;
+}
+
+message SetNotifiedResponse{
   string id = 1;
 }
 

@@ -67,6 +67,20 @@ SELECT id, title, lower(duration) as start_time, upper(duration) as end_time, de
 FROM events
 WHERE lower(duration) <@ $1::tsrange
 `
+
+	FindForNotify = `
+SELECT id, title, lower(duration) as start_time, upper(duration) as end_time, description, user_id,
+       notify_before_event
+FROM events
+WHERE is_notified = 'false' AND 
+      (now() + floor(notify_before_event / 1000) * interval '1 microsecond' >= lower(duration))
+`
+
+	SetNotified = `
+UPDATE events 
+    SET is_notified = 'true'
+WHERE id = $1 RETURNING id
+`
 )
 
 type Storage struct {
@@ -172,6 +186,23 @@ func (s *Storage) FindAll(ctx context.Context) ([]*model.DBEvent, error) {
 	return events, nil
 }
 
+func (s *Storage) FindForNotify(ctx context.Context) ([]*model.DBEvent, error) {
+	fail := func(e error) ([]*model.DBEvent, error) {
+		return nil, fmt.Errorf("FindByDayRange %w", e)
+	}
+	rows, err := s.db.QueryContext(ctx, FindForNotify)
+	if err != nil {
+		return fail(err)
+	}
+	defer rows.Close()
+
+	events, er := findRequestHandler(rows)
+	if er != nil {
+		return fail(er)
+	}
+	return events, nil
+}
+
 func (s *Storage) FindAllByDay(ctx context.Context, date time.Time) ([]*model.DBEvent, error) {
 	fail := func(e error) ([]*model.DBEvent, error) {
 		return nil, fmt.Errorf("FindByDayRange %w", e)
@@ -227,6 +258,19 @@ func (s *Storage) FindAllByMonth(ctx context.Context, date time.Time) ([]*model.
 		return fail(er)
 	}
 	return events, nil
+}
+
+func (s *Storage) SetNotified(ctx context.Context, id string) (string, error) {
+	fail := func(e error) error {
+		return fmt.Errorf("SetNotified %w", e)
+	}
+	var eid string
+	err := s.db.QueryRowContext(ctx, SetNotified, id).Scan(&eid)
+	if err != nil {
+		return id, fail(err)
+	}
+
+	return eid, nil
 }
 
 func (s *Storage) Update(ctx context.Context, event *model.DBEvent) (updatedEvent *model.DBEvent, err error) {

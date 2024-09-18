@@ -1,5 +1,5 @@
 -- +goose Up
--- CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; - must be run on a database with proper wrights
+-- CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; - must be run on a database with proper rights
 
 CREATE table events
 (
