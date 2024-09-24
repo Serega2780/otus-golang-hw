@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/yaml.v3"
 )
 
@@ -50,13 +51,13 @@ type GRPCServerConfig struct {
 type AMQPConfig struct {
 	IP        string `default:"0.0.0.0" yaml:"ip"`
 	Port      string `default:"5672" yaml:"port"`
-	QueueName string `default:"event_notify" yaml:"queueName"`
+	QueueName string `split_words:"true" default:"event_notify" yaml:"queueName"`
 }
 
 func New() *Config {
 	return &Config{
 		IsInMemory:             true,
-		SchedulerPeriodSeconds: 3,
+		SchedulerPeriodSeconds: 30,
 		Logger:                 &LoggerConf{Level: "info", Format: "text", LogToFile: false, LogToConsole: true},
 		DB:                     &DBConf{},
 		HTTP:                   &HTTPServerConfig{IP: "0.0.0.0", Port: "8585"},
@@ -77,8 +78,12 @@ func ReadConfig(configFile string) *Config {
 		}
 	}
 	if conf.Logger == nil {
-		fmt.Println("Will use default config")
-		conf = New()
+		err = envconfig.Process("", conf)
+		if err != nil {
+			fmt.Printf("Process ENV variables %v\n", err)
+			fmt.Println("Will use default config")
+			conf = New()
+		}
 	}
 	return conf
 }

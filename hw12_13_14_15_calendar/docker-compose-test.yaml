@@ -1,0 +1,130 @@
+version: "3.9"
+
+networks:
+  rabbit:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.11.0/28
+  db:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.11.16/28
+
+services:
+  integration_tests:
+    build:
+      context: ./
+      dockerfile: ./integration/Dockerfile
+    command: "true"
+    links:
+      - calendar-app
+      - calendar-scheduler
+      - calendar-sender
+    networks:
+      - db
+
+  calendar-app:
+    container_name: calendar-app
+    build:
+      context: ./
+      dockerfile: ./build/calendar/DockerfileTest
+    depends_on:
+      - docker-postgres
+    restart: on-failure
+    ports:
+      - "8585:8585"
+      - "6565:6565"
+    expose:
+      - 8585
+      - 6565
+    environment:
+      LOGGER_LEVEL: info
+      LOGGER_FORMAT: json
+      LOGGER_LOG_TO_FILE: false
+      LOGGER_LOG_TO_CONSOLE: true
+      IS_IN_MEMORY: false
+      DB_USER: calendar
+      DB_PASSWORD: calendar
+      DB_DBNAME: calendar
+      DB_HOST: docker-postgres
+      DB_PORT: 5432
+      DB_MIGRATION: ./
+      HTTP_IP: 0.0.0.0
+      HTTP_PORT: 8585
+      GRPC_IP: 0.0.0.0
+      GRPC_PORT: 6565
+    networks:
+      - db
+
+  calendar-scheduler:
+    build:
+      context: ./
+      dockerfile: ./build/scheduler/Dockerfile
+    depends_on:
+      - docker-rabbit
+      - calendar-app
+    restart: on-failure
+    environment:
+      LOGGER_LEVEL: info
+      LOGGER_FORMAT: json
+      LOGGER_LOG_TO_FILE: false
+      LOGGER_LOG_TO_CONSOLE: true
+      SCHEDULER_PERIOD_SECONDS: 1
+      AMQP_IP: docker-rabbit
+      AMQP_PORT: 5672
+      AMQP_QUEUE_NAME: event_notify
+      GRPC_IP: calendar-app
+      GRPC_PORT: 6565
+    networks:
+      - rabbit
+      - db
+
+  calendar-sender:
+    build:
+      context: ./
+      dockerfile: ./build/sender/Dockerfile
+    depends_on:
+      - docker-rabbit
+    restart: on-failure
+    environment:
+      LOGGER_LEVEL: info
+      LOGGER_FORMAT: json
+      LOGGER_LOG_TO_FILE: false
+      LOGGER_LOG_TO_CONSOLE: true
+      SCHEDULER_PERIOD_SECONDS: 30
+      AMQP_IP: docker-rabbit
+      AMQP_PORT: 5672
+      AMQP_QUEUE_NAME: event_notify
+    networks:
+      - rabbit
+      - db
+
+  docker-postgres:
+    container_name: docker-postgres
+    image: postgres:11.6
+    ports:
+      - "5433:5432"
+    expose:
+      - 5433
+    environment:
+      POSTGRES_USER: calendar
+      POSTGRES_PASSWORD: calendar
+      POSTGRES_DB: calendar
+    volumes:
+      # https://github.com/docker-library/postgres/blob/master/docker-entrypoint.sh#L145
+      - ./scripts/setup.sql:/docker-entrypoint-initdb.d/setup.sql
+    networks:
+      - db
+
+  docker-rabbit:
+    container_name: docker-rabbit
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    expose:
+      - 15672
+    networks:
+      - rabbit
