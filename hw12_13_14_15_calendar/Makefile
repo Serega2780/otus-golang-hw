@@ -25,23 +25,46 @@ build:
 	go build -v -o $(BIN_SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
 	go build -v -o $(BIN_SENDER) -ldflags "$(LDFLAGS)" ./cmd/calendar_sender
 
-run: build
-	$(BIN_CALENDAR) -config ./configs/calendar_config.yaml
+# run: build
+# 	$(BIN_CALENDAR) -config ./configs/calendar_config.yaml
 
-build-img:
-	docker build \
-		--build-arg=LDFLAGS="$(LDFLAGS)" \
-		-t $(DOCKER_IMG) \
-		-f build/Dockerfile .
+# build-img:
+# 	docker build \
+# 		--build-arg=LDFLAGS="$(LDFLAGS)" \
+# 		-t $(DOCKER_IMG) \
+# 		-f build/Dockerfile .
+#
+# run-img: build-img
+# 	docker run $(DOCKER_IMG)
+#
+# version: build
+# 	$(BIN_CALENDAR) version
 
-run-img: build-img
-	docker run $(DOCKER_IMG)
+up:
+	docker compose -f docker-compose.yaml up -d
 
-version: build
-	$(BIN_CALENDAR) version
+down:
+	docker compose -f docker-compose.yaml down
 
 test:
 	go test -race ./internal/storage/memory ./internal/server/grpc ./internal/server/http
+
+integration_test:
+	set -e ;\
+	docker compose -f docker-compose-test.yaml build ;\
+	test_status_code=0 ;\
+	docker compose -f docker-compose-test.yaml run integration_tests go test ./integration || test_status_code=$$? ;\
+	docker compose -f docker-compose-test.yaml down ;\
+	exit $$test_status_code ;
+
+integration_test-cleanup:
+	docker compose -f docker-compose-test.yaml down \
+        --rmi local \
+		--volumes \
+		--remove-orphans \
+		--timeout 60; \
+  	docker compose rm -f
+
 
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.57.2
@@ -49,4 +72,6 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint run ./...
 
-.PHONY: build run build-img run-img version test lint
+# run build-img run-img
+
+.PHONY: build  version test lint

@@ -4,11 +4,11 @@ logger:
   file: calendar.log
   logToFile: true
   logToConsole: true
-isInMemory: false
+isInMemory: true
 
 db:
-  user: calendar
-  password: calendar
+  user:
+  password:
   dbname: calendar
   host: localhost
   port: 5432

@@ -30,14 +30,14 @@ var (
 			UserID:      uuid.New().String(),
 		},
 		{
-			Title:       "2st event",
+			Title:       "2nd event",
 			StartTime:   tm2,
 			EndTime:     tmE2,
 			Description: "long description for 2nd event",
 			UserID:      uuid.New().String(),
 		},
 		{
-			Title:       "3st event",
+			Title:       "3rd event",
 			StartTime:   tm3,
 			EndTime:     tmE3,
 			Description: "long description for 3rd event",
