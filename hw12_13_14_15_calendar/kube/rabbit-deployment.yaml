@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbit-deployment
+  namespace: calendar
+  labels:
+    app: rabbit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbit
+  template:
+    metadata:
+      labels:
+        app: rabbit
+    spec:
+      dnsConfig:
+        searches:
+          - calendar.svc.cluster.local
+      containers:
+        - name: rabbit
+          image: rabbitmq:3-management-alpine
+          ports:
+            - name: rabbit-internal
+              containerPort: 5672
+              protocol: TCP
+            - name: rabbit-external
+              containerPort: 15672
+              protocol: TCP
+
