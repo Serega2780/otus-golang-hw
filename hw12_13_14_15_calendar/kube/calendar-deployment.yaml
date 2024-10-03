@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calendar-deployment
+  namespace: calendar
+  labels:
+    app: calendar
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: calendar
+  template:
+    metadata:
+      labels:
+        app: calendar
+    spec:
+      containers:
+        - name: calendar
+          image: calendar:0.0.1
+          env:
+            - name: LOGGER_LEVEL
+              value: info
+            - name: LOGGER_FORMAT
+              value: json
+            - name: LOGGER_LOG_TO_FILE
+              value: "false"
+            - name: LOGGER_LOG_TO_CONSOLE
+              value: "true"
+            - name: IS_IN_MEMORY
+              value: "false"
+            - name: DB_USER
+              value: calendar
+            - name: DB_PASSWORD
+              value: calendar
+            - name: DB_DBNAME
+              value: calendar
+            - name: DB_HOST
+              value: postgres-service
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_MIGRATION
+              value: ./
+            - name: HTTP_IP
+              value: 0.0.0.0
+            - name: HTTP_PORT
+              value: "8585"
+            - name: GRPC_IP
+              value: 0.0.0.0
+            - name: GRPC_PORT
+              value: "6565"
+          ports:
+            - name: http
+              containerPort: 8585
+              protocol: TCP
+            - name: grpc
+              containerPort: 6565
+              protocol: TCP

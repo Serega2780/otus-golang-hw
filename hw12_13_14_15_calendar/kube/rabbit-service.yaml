@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbit-service
+  labels:
+    app: rabbit
+spec:
+  type: NodePort
+  ports:
+    - port: 5672
+      targetPort: rabbit-internal
+      protocol: TCP
+      name: rabbit-port
+    - port: 15672
+      targetPort: rabbit-external
+      protocol: TCP
+      name: rabbit-external-port
+      nodePort: 30672
+  selector:
+    app: rabbit

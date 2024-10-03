@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scheduler-deployment
+  labels:
+    app: scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scheduler
+  template:
+    metadata:
+      labels:
+        app: scheduler
+    spec:
+      containers:
+        - name: scheduler
+          image: scheduler:0.0.1
+          env:
+            - name: LOGGER_LEVEL
+              value: info
+            - name: LOGGER_FORMAT
+              value: json
+            - name: LOGGER_LOG_TO_FILE
+              value: "false"
+            - name: LOGGER_LOG_TO_CONSOLE
+              value: "true"
+            - name: SCHEDULER_PERIOD_SECONDS
+              value: "30"
+            - name: AMQP_IP
+              value: rabbit-service
+            - name: AMQP_PORT
+              value: "5672"
+            - name: AMQP_QUEUE_NAME
+              value: event_notify
+            - name: GRPC_IP
+              value: calendar-service
+            - name: GRPC_PORT
+              value: "6565"

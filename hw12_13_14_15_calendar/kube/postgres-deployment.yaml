@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  namespace: calendar
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      dnsConfig:
+        searches:
+          - calendar.svc.cluster.local
+      containers:
+        - name: postgres
+          image: postgres:11.6
+          env:
+            - name: POSTGRES_USER
+              value: calendar
+            - name: POSTGRES_PASSWORD
+              value: calendar
+            - name: POSTGRES_DB
+              value: calendar
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+          volumeMounts:
+            - name: postgre-initdb
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: postgre-initdb
+          configMap:
+            name: postgre-initdb-config
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgre-initdb-config
+data:
+  initdb.sql: |
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

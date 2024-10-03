@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rabbit.fullname" . }}
+  labels:
+    {{- include "rabbit.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.internal }}
+      targetPort: internal
+      protocol: TCP
+      name: internal
+    - port: {{ .Values.service.external }}
+      targetPort: external
+      protocol: TCP
+      name: external
+      nodePort: {{ .Values.service.np }}
+  selector:
+    {{- include "rabbit.selectorLabels" . | nindent 4 }}
