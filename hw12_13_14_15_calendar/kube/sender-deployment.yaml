@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sender-deployment
+  labels:
+    app: sender
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sender
+  template:
+    metadata:
+      labels:
+        app: sender
+    spec:
+      containers:
+        - name: sender
+          image: sender:0.0.1
+          env:
+            - name: LOGGER_LEVEL
+              value: info
+            - name: LOGGER_FORMAT
+              value: json
+            - name: LOGGER_LOG_TO_FILE
+              value: "false"
+            - name: LOGGER_LOG_TO_CONSOLE
+              value: "true"
+            - name: AMQP_IP
+              value: rabbit-service
+            - name: AMQP_PORT
+              value: "5672"
+            - name: AMQP_QUEUE_NAME
+              value: event_notify
